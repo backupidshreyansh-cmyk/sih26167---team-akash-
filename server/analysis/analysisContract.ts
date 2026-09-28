@@ -18,6 +18,8 @@
  * Model confidence must NEVER by itself produce VERIFIED.
  */
 
+import { classifyQueryIntent } from '../agent/taskClassifier.js';
+
 export type EvidenceSufficiency = 'STRONG' | 'MODERATE' | 'WEAK' | 'INSUFFICIENT' | 'CONFLICTING';
 
 export type FinalDecision = 'VERIFIED' | 'INCONCLUSIVE' | 'NEEDS_MORE_DATA' | 'NEEDS_MORE_EVIDENCE' | 'EVIDENCE_CONFLICT' | 'INVALID_INPUT';
@@ -219,6 +221,18 @@ export function validateAndNormalizeAnalysisContract(
     ? raw.verificationResult.trim()
     : "Verification check completed against image evidence.";
 
+  const qLower = query.toLowerCase();
+  const intent = classifyQueryIntent(query);
+  const isVisualObservation = intent === 'VISUAL_OBSERVATION';
+  const isCausalOrLandUseAttribution = intent === 'CAUSAL_ATTRIBUTION' ||
+    qLower.includes('land-use') || qLower.includes('land use') ||
+    qLower.includes('deforestation') || qLower.includes('deforested') ||
+    qLower.includes('why did') || qLower.includes('what caused') ||
+    qLower.includes('cause of') || qLower.includes('caused by') ||
+    qLower.includes('attributed to') || qLower.includes('attribution') ||
+    qLower.includes('flood damage') || qLower.includes('disaster damage') ||
+    qLower.includes('crop type') || qLower.includes('specific crop');
+
   // Normalize Evidence Sufficiency
   let rawSufficiency = String(raw.evidenceSufficiency || '').toUpperCase().trim();
   let evidenceSufficiency: EvidenceSufficiency = 'MODERATE';
@@ -235,10 +249,18 @@ export function validateAndNormalizeAnalysisContract(
     evidenceSufficiency = 'MODERATE';
   } else {
     // Default based on real evidence presence
-    if (observations.length === 0 || supportingEvidence.length === 0) {
-      evidenceSufficiency = 'INSUFFICIENT';
-    } else if (String(raw.finalDecision || '').toUpperCase().includes('CONFLICT')) {
-      evidenceSufficiency = 'CONFLICTING';
+    if (isVisualObservation) {
+      if (observations.length > 0 || observedAndMeasured.length > 0) {
+        evidenceSufficiency = 'STRONG';
+      } else {
+        evidenceSufficiency = 'INSUFFICIENT';
+      }
+    } else {
+      if (observations.length === 0 || supportingEvidence.length === 0) {
+        evidenceSufficiency = 'INSUFFICIENT';
+      } else if (String(raw.finalDecision || '').toUpperCase().includes('CONFLICT')) {
+        evidenceSufficiency = 'CONFLICTING';
+      }
     }
   }
 
@@ -246,7 +268,10 @@ export function validateAndNormalizeAnalysisContract(
   if (deterministicEvidenceState === 'CONFLICTING') {
     evidenceSufficiency = 'CONFLICTING';
   } else if (deterministicEvidenceState === 'INSUFFICIENT' && evidenceSufficiency !== 'CONFLICTING') {
-    evidenceSufficiency = 'INSUFFICIENT';
+    // For visual observation questions, deterministic non-conflict does not make visual observations insufficient
+    if (!isVisualObservation) {
+      evidenceSufficiency = 'INSUFFICIENT';
+    }
   }
 
   // Model confidence separate from evidence sufficiency
@@ -259,19 +284,6 @@ export function validateAndNormalizeAnalysisContract(
   else if (rawConf.includes('NOT') || rawConf.includes('NONE')) modelConfidence = 'Not Calibrated';
   else modelConfidence = 'Moderate';
 
-  // Strict Decision Gate Enforcement:
-  // RULE: OBSERVED ≠ INFERRED ≠ VERIFIED.
-  // Do NOT label the result VERIFIED merely because the VLM has high confidence!
-  const qLower = query.toLowerCase();
-  const isCausalOrLandUseAttribution = 
-    qLower.includes('land-use') || qLower.includes('land use') ||
-    qLower.includes('deforestation') || qLower.includes('deforested') ||
-    qLower.includes('why did') || qLower.includes('what caused') ||
-    qLower.includes('cause of') || qLower.includes('caused by') ||
-    qLower.includes('attributed to') || qLower.includes('attribution') ||
-    qLower.includes('flood damage') || qLower.includes('disaster damage') ||
-    qLower.includes('crop type') || qLower.includes('specific crop');
-
   let rawDecision = String(raw.finalDecision || '').toUpperCase().trim();
   let finalDecision: FinalDecision = 'INCONCLUSIVE';
 
@@ -279,7 +291,24 @@ export function validateAndNormalizeAnalysisContract(
   let requiredObservation = typeof raw.requiredObservation === 'string' ? raw.requiredObservation : undefined;
   let recommendedAction = typeof raw.recommendedAction === 'string' ? raw.recommendedAction : undefined;
 
-  if (evidenceSufficiency === 'CONFLICTING' || rawDecision.includes('CONFLICT')) {
+  // DECISION GATING:
+  // 1. VISUAL OBSERVATION INTENT
+  // Questions like "What is visible in this image?", "Is vegetation present?", "Describe the visible features"
+  // allow a VERIFIED answer when the image directly supports the observation.
+  // Missing dates, georeferencing, or a second image must not make a visual-observation answer inconclusive.
+  if (isVisualObservation) {
+    if ((observations.length > 0 || observedAndMeasured.length > 0) && evidenceSufficiency !== 'CONFLICTING') {
+      finalDecision = 'VERIFIED';
+      whyNotVerified = undefined; // Do not produce contradictory WHY NOT VERIFIED when VERIFIED
+    } else if (evidenceSufficiency === 'CONFLICTING' || rawDecision.includes('CONFLICT')) {
+      finalDecision = 'EVIDENCE_CONFLICT';
+      whyNotVerified = "Conflicting visual or sensor indicators detected in raster bitstream.";
+    } else {
+      finalDecision = 'INCONCLUSIVE';
+      whyNotVerified = "No clear visual surface features could be isolated from the supplied image.";
+      requiredObservation = "Upload an image with adequate contrast and resolution.";
+    }
+  } else if (evidenceSufficiency === 'CONFLICTING' || rawDecision.includes('CONFLICT')) {
     finalDecision = 'EVIDENCE_CONFLICT';
     whyNotVerified = whyNotVerified || "Different sensor observations or radiometric bands provide conflicting signatures.";
     requiredObservation = requiredObservation || "Complementary dual-polarization SAR or coincident high-resolution optical observation.";
@@ -298,13 +327,14 @@ export function validateAndNormalizeAnalysisContract(
       // RULE: Do not say VERIFIED when evidence only supports visual observation or plausible interpretation
       if (isCausalOrLandUseAttribution) {
         finalDecision = 'INCONCLUSIVE';
-        whyNotVerified = whyNotVerified || "The difference or visual appearance is consistent with plausible interpretations, but cannot be verified specifically as permanent land-use change or deforestation without comparable seasonal baselines and calibrated spectral data.";
+        whyNotVerified = whyNotVerified || "The difference or visual appearance is consistent with plausible interpretations, but cannot be verified specifically as permanent land-use change, construction cause, or deforestation without comparable seasonal baselines and calibrated spectral data.";
         requiredObservation = requiredObservation || "Comparable temporal imagery, appropriate spectral evidence (NDVI/SWIR), and artifact/confounder checks.";
       } else if (contradictingEvidence.length > 0 && alternativeExplanations.length > 0 && !raw.verificationResult?.toLowerCase().includes('verified')) {
         finalDecision = 'INCONCLUSIVE';
         whyNotVerified = whyNotVerified || "Alternative physical explanation or confounder casts doubt on the primary hypothesis.";
       } else {
         finalDecision = 'VERIFIED';
+        whyNotVerified = undefined;
       }
     } else if (rawDecision.includes('INCONCLUSIVE')) {
       finalDecision = 'INCONCLUSIVE';
@@ -317,6 +347,7 @@ export function validateAndNormalizeAnalysisContract(
         whyNotVerified = whyNotVerified || "Available visual observations only suggest a plausible interpretation; scientific attribution is not established.";
       } else {
         finalDecision = 'VERIFIED';
+        whyNotVerified = undefined;
       }
     }
   }
@@ -328,28 +359,38 @@ export function validateAndNormalizeAnalysisContract(
         ? [verificationResult || "Direct radiometric and spatial presence of observable features is verified from raster bitstream."]
         : (isCausalOrLandUseAttribution
             ? ["Radiometric and textural differences between observations are established; specific land-use or physical attribution is not verified."]
-            : ["Observable raster surface features and pixel characteristics are established; higher-order claims requiring calibration are unverified."]));
+            : (isVisualObservation
+                ? ["Observable raster surface features and pixel characteristics are established."]
+                : ["Observable raster surface features and pixel characteristics are established; higher-order claims requiring calibration are unverified."])));
 
   // Populate Missing Evidence 5-Tier Breakdown
   const whatICanDetermine = toStringArray(raw.whatICanDetermine).length > 0
     ? toStringArray(raw.whatICanDetermine)
     : (observedAndMeasured.length > 0 ? observedAndMeasured.slice(0, 4) : observations.slice(0, 4));
 
-  const whatICannotDetermine = toStringArray(raw.whatICannotDetermine).length > 0
-    ? toStringArray(raw.whatICannotDetermine)
-    : (notEstablished.length > 0 ? notEstablished.slice(0, 3) : ["Specific physical attribution without calibrated multi-sensor inputs."]);
+  const whatICannotDetermine = finalDecision === 'VERIFIED' 
+    ? [] 
+    : (toStringArray(raw.whatICannotDetermine).length > 0
+        ? toStringArray(raw.whatICannotDetermine)
+        : (notEstablished.length > 0 ? notEstablished.slice(0, 3) : ["Specific physical attribution without calibrated multi-sensor inputs."]));
 
-  const why = typeof raw.why === 'string' && raw.why.trim().length > 0
-    ? raw.why.trim()
-    : (whyNotVerified || "Available evidence supports observable pixels and plausible interpretations, but does not establish quantitative proof or causal attribution.");
+  const why = finalDecision === 'VERIFIED' 
+    ? undefined 
+    : (typeof raw.why === 'string' && raw.why.trim().length > 0
+        ? raw.why.trim()
+        : (whyNotVerified || "Available evidence supports observable pixels and plausible interpretations, but does not establish quantitative proof or causal attribution."));
 
-  const whatDataIsRequired = typeof raw.whatDataIsRequired === 'string' && raw.whatDataIsRequired.trim().length > 0
-    ? raw.whatDataIsRequired.trim()
-    : (requiredObservation || requiredEvidence.join('; ') || "Calibrated multi-spectral, multi-temporal, or orthorectified imagery.");
+  const whatDataIsRequired = finalDecision === 'VERIFIED' 
+    ? undefined 
+    : (typeof raw.whatDataIsRequired === 'string' && raw.whatDataIsRequired.trim().length > 0
+        ? raw.whatDataIsRequired.trim()
+        : (requiredObservation || requiredEvidence.join('; ') || "Calibrated multi-spectral, multi-temporal, or orthorectified imagery."));
 
-  const whatTheUserShouldUpload = typeof raw.whatTheUserShouldUpload === 'string' && raw.whatTheUserShouldUpload.trim().length > 0
-    ? raw.whatTheUserShouldUpload.trim()
-    : (recommendedAction || "Orthorectified GeoTIFF with authoritative spatial coordinate reference system and required spectral bands.");
+  const whatTheUserShouldUpload = finalDecision === 'VERIFIED' 
+    ? undefined 
+    : (typeof raw.whatTheUserShouldUpload === 'string' && raw.whatTheUserShouldUpload.trim().length > 0
+        ? raw.whatTheUserShouldUpload.trim()
+        : (recommendedAction || "Orthorectified GeoTIFF with authoritative spatial coordinate reference system and required spectral bands."));
 
   let answer = typeof raw.answer === 'string' && raw.answer.trim().length > 0
     ? raw.answer.trim()

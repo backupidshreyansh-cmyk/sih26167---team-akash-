@@ -408,7 +408,7 @@ export function AnalysisWorkspace({
         {/* TRY A DEMO (Simple 4-chip row) */}
         <div className="pt-2 border-t border-slate-800/80">
           <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block mb-2">
-            Try a demo:
+            Try a demo (synthetic illustrations):
           </span>
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -416,35 +416,35 @@ export function AnalysisWorkspace({
               disabled={isLoadingPreset}
               className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              Optical
+              Synthetic Optical
             </button>
             <button
               onClick={() => onLoadPreset(DEMO_PRESETS[1])}
               disabled={isLoadingPreset}
               className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              SAR
+              Synthetic Radar
             </button>
             <button
               onClick={() => onLoadPreset(DEMO_PRESETS[2])}
               disabled={isLoadingPreset}
               className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              Optical + SAR
+              Synthetic Optical + Radar
             </button>
             <button
               onClick={() => onLoadPreset(DEMO_PRESETS[3])}
               disabled={isLoadingPreset}
               className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              Before / After
+              Synthetic Before / After
             </button>
             <button
               onClick={() => onLoadPreset(DEMO_PRESETS[4])}
               disabled={isLoadingPreset}
               className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              Uncertain result
+              Safety / Abstention Check
             </button>
           </div>
         </div>

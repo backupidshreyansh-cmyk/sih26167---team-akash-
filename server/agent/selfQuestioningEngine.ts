@@ -1,5 +1,6 @@
 import { NormalizedImage } from '../imagery/types.js';
 import { AIProvider, AIProviderResponse } from '../providers/AIProvider.js';
+import { classifyQueryIntent } from './taskClassifier.js';
 import { 
   AnalysisContract, 
   AnalysisAudit, 
@@ -191,10 +192,12 @@ export class SelfQuestioningEngine {
 
     // CASE 2: TEMPORAL INQUIRY WITH ONLY 1 IMAGE (Abstain: NEEDS MORE DATA)
     const qLower = query.toLowerCase();
-    const isTemporalInquiry = (task === 'BI_TEMPORAL_ANALYSIS' || task === 'CHANGE_VQA' ||
+    const queryIntent = classifyQueryIntent(query);
+    const isTemporalInquiry = (queryIntent === 'TEMPORAL_CHANGE' || queryIntent === 'CAUSAL_ATTRIBUTION' ||
+      task === 'BI_TEMPORAL_ANALYSIS' || task === 'CHANGE_VQA' ||
       qLower.includes('change') || qLower.includes('increased') || qLower.includes('decreased') ||
       qLower.includes('flood extent') || qLower.includes('before and after') || qLower.includes('between these images')) &&
-      !isMetadataQuery;
+      !isMetadataQuery && queryIntent !== 'VISUAL_OBSERVATION';
 
     if (isTemporalInquiry && images.length === 1) {
       verificationLevel = 0;
@@ -368,7 +371,8 @@ export class SelfQuestioningEngine {
     let escalationReason = '';
 
     // Check if deterministic findings contradict model's initial hypothesis
-    if (biTemporalCheck && biTemporalCheck.isGlobalIlluminationShift && contract.finalDecision === 'VERIFIED') {
+    // Only check illumination shift conflict for temporal change questions, not pure visual observation questions
+    if (queryIntent !== 'VISUAL_OBSERVATION' && biTemporalCheck && biTemporalCheck.isGlobalIlluminationShift && contract.finalDecision === 'VERIFIED') {
       needsEscalation = true;
       escalationReason = 'Deterministic bi-temporal analysis detected uniform illumination shift, contradicting candidate change claim.';
     } else if (crossModalCheck && crossModalCheck.agreementStatus === 'CONFLICT') {
@@ -378,21 +382,24 @@ export class SelfQuestioningEngine {
       needsEscalation = true;
       escalationReason = 'Model internal counter-analysis detected conflicting evidence.';
     } else if (contract.evidenceSufficiency === 'INSUFFICIENT' && (contract.modelConfidence === 'HIGH' || contract.modelConfidence === 'High')) {
-      // Confidence decoupling rule: model is overconfident despite insufficient evidence
-      trace.push({
-        step: 'CONFIDENCE_DECOUPLING_ENFORCED',
-        status: 'WARNING',
-        details: 'Model expressed HIGH confidence but evidence sufficiency is INSUFFICIENT. Enforcing INCONCLUSIVE gate.'
-      });
-      contract.finalDecision = 'INCONCLUSIVE';
-      contract.answer = `INCONCLUSIVE: ${contract.answer}`;
+      // Confidence decoupling rule: model is overconfident despite insufficient evidence (for non-visual or ungrounded claims)
+      if (queryIntent !== 'VISUAL_OBSERVATION') {
+        trace.push({
+          step: 'CONFIDENCE_DECOUPLING_ENFORCED',
+          status: 'WARNING',
+          details: 'Model expressed HIGH confidence but evidence sufficiency is INSUFFICIENT. Enforcing INCONCLUSIVE gate.'
+        });
+        contract.finalDecision = 'INCONCLUSIVE';
+        contract.answer = `INCONCLUSIVE: ${contract.answer}`;
+      }
     }
 
     // RULE: OBSERVED ≠ INFERRED ≠ VERIFIED.
     // If the query asks for land-use change, deforestation, causal attribution, or unproven interpretation:
     // Do NOT label VERIFIED merely because the VLM has high confidence!
     const qLowerAttribution = query.toLowerCase();
-    const isAttributionQuery = qLowerAttribution.includes('land-use') || qLowerAttribution.includes('land use') ||
+    const isAttributionQuery = queryIntent === 'CAUSAL_ATTRIBUTION' ||
+      qLowerAttribution.includes('land-use') || qLowerAttribution.includes('land use') ||
       qLowerAttribution.includes('deforestation') || qLowerAttribution.includes('deforested') ||
       qLowerAttribution.includes('why did') || qLowerAttribution.includes('what caused') ||
       qLowerAttribution.includes('cause of') || qLowerAttribution.includes('caused by') ||
@@ -407,7 +414,18 @@ export class SelfQuestioningEngine {
         details: 'Attribution/land-use change query cannot be verified from visual evidence alone without seasonal baseline & spectral calibration. Clamping to INCONCLUSIVE.'
       });
       contract.finalDecision = 'INCONCLUSIVE';
-      contract.whyNotVerified = "The visual difference is consistent with a plausible interpretation, but cannot be verified specifically as permanent land-use change or deforestation without comparable temporal imagery, calibrated spectral evidence, and artifact checks.";
+      contract.whyNotVerified = "The visual difference is consistent with a plausible interpretation, but cannot be verified specifically as permanent land-use change, construction cause, or deforestation without comparable temporal imagery, calibrated spectral evidence, and artifact checks.";
+    }
+
+    // For visual observation questions like "What is visible in this image?", "Is vegetation present?", "Describe the visible features"
+    // allow a VERIFIED answer when the image directly supports the observation.
+    // Missing dates, georeferencing, or a second image must not make a visual-observation answer inconclusive.
+    if (queryIntent === 'VISUAL_OBSERVATION' && (contract.observations.length > 0 || (contract.observedAndMeasured && contract.observedAndMeasured.length > 0))) {
+      if (contract.finalDecision !== 'EVIDENCE_CONFLICT') {
+        contract.finalDecision = 'VERIFIED';
+        contract.evidenceSufficiency = 'STRONG';
+        contract.whyNotVerified = undefined;
+      }
     }
 
     // STAGE 4 (ADAPTIVE ESCALATION): LEVEL 2 VERIFICATION ONLY WHEN CONFLICT/AMBIGUITY OCCURS
@@ -968,36 +986,27 @@ Return a revised JSON response:
     const inferredText = contract.inferred && contract.inferred.length > 0
       ? contract.inferred.map(i => `• ${i}`).join('\n')
       : (contract.initialHypothesis
-          ? `• ${contract.initialHypothesis} (Qualitative assessment based on available evidence; estimated likelihood: moderate).`
-          : `• Inferred interpretation from observable patterns; quantitative confirmation unavailable.`);
+          ? `• ${contract.initialHypothesis}`
+          : `• Inferred interpretation from observable patterns.`);
 
-    const verifiedText = contract.verified && contract.verified.length > 0
-      ? contract.verified.map(v => `• ${v}`).join('\n')
-      : (contract.finalDecision === 'VERIFIED'
-          ? `• ${contract.verificationResult || 'Presence and visual characteristics of observed features are established by raster bitstream.'}`
-          : '• Observable raster surface features and pixel characteristics are established; higher-order claims requiring calibration are not established.');
+    const decisionText = contract.finalDecision.replace(/_/g, ' ');
 
-    const notEstablishedText = contract.notEstablished && contract.notEstablished.length > 0
-      ? contract.notEstablished.map(n => `• ${n}`).join('\n')
-      : (contract.whyNotVerified ? `• ${contract.whyNotVerified}` : '• Physical attribution, precise ground coordinates, and sub-pixel metrics cannot be concluded without complementary calibrated inputs.');
-
-    const requiredText = contract.requiredEvidence && contract.requiredEvidence.length > 0
-      ? contract.requiredEvidence.map(r => `• ${r}`).join('\n')
-      : (contract.requiredObservation ? `• ${contract.requiredObservation}` : '• Comparable temporal imagery, appropriate spectral evidence, and artifact/confounder checks.');
+    const limitationsText = contract.limitations && contract.limitations.length > 0
+      ? contract.limitations.map(l => `• ${l}`).join('\n')
+      : '• Analysis constrained by available sensor channels and ground pixel resolution.';
 
     let missingEvidenceBlock = '';
-    if (contract.finalDecision !== 'VERIFIED' || contract.whyNotVerified || contract.evidenceSufficiency === 'INSUFFICIENT') {
-      const canDet = contract.whatICanDetermine && contract.whatICanDetermine.length > 0
-        ? contract.whatICanDetermine.map(d => `• ${d}`).join('\n')
-        : obsText;
-      const cannotDet = contract.whatICannotDetermine && contract.whatICannotDetermine.length > 0
+    if (contract.finalDecision !== 'VERIFIED') {
+      const whyText = contract.why || contract.whyNotVerified || 'Available evidence is insufficient to verify the claim without guessing.';
+      const notEst = contract.whatICannotDetermine && contract.whatICannotDetermine.length > 0
         ? contract.whatICannotDetermine.map(d => `• ${d}`).join('\n')
-        : notEstablishedText;
-      const whyText = contract.why || contract.whyNotVerified || 'Available evidence supports observable pixels and plausible interpretations, but does not establish quantitative proof or causal attribution.';
-      const reqText = contract.whatDataIsRequired || contract.requiredObservation || 'Calibrated multi-spectral, multi-temporal, or orthorectified imagery.';
+        : (contract.notEstablished && contract.notEstablished.length > 0
+            ? contract.notEstablished.map(n => `• ${n}`).join('\n')
+            : `• ${whyText}`);
+      const reqText = contract.whatDataIsRequired || contract.requiredObservation || 'Additional observation with calibrated spectral bands or temporal baseline.';
       const uploadText = contract.whatTheUserShouldUpload || contract.recommendedAction || 'Orthorectified GeoTIFF with authoritative spatial coordinate reference system and required spectral bands.';
 
-      missingEvidenceBlock = `\n\n**WHAT I CAN DETERMINE**:\n${canDet}\n\n**WHAT I CANNOT DETERMINE**:\n${cannotDet}\n\n**WHY**:\n• ${whyText}\n\n**WHAT DATA IS REQUIRED**:\n• ${reqText}\n\n**WHAT THE USER SHOULD UPLOAD**:\n• ${uploadText}`;
+      missingEvidenceBlock = `\n\n**WHAT IS NOT ESTABLISHED**:\n${notEst}\n\n**WHY SYSTEM ABSTAINED**:\n• ${whyText}\n\n**REQUIRED EVIDENCE**:\n• ${reqText}\n\n**RECOMMENDED UPLOAD**:\n• ${uploadText}`;
     }
 
     let comparisonBlock = '';
@@ -1014,7 +1023,7 @@ Return a revised JSON response:
       comparisonBlock = `\n\n**COMPARATIVE ANALYSIS**:\n- **Relationship**: ${comp.relationshipLabel}\n- **What Changed / Differs**: ${comp.whatChangedOrDiffers.join('; ')}\n- **What Stayed the Same**: ${comp.whatStayedSame.join('; ')}\n- **What Cannot Be Compared**: ${comp.whatCannotBeCompared.join('; ')}${knownBlock}${clarBlock}`;
     }
 
-    return `**OBSERVED**:\n${obsText}\n\n**INFERRED**:\n${inferredText}\n\n**VERIFIED**:\n${verifiedText}\n\n**NOT ESTABLISHED**:\n${notEstablishedText}\n\n**REQUIRED EVIDENCE**:\n${requiredText}${missingEvidenceBlock}${comparisonBlock}`;
+    return `**DIRECT OBSERVATIONS**:\n${obsText}\n\n**INTERPRETATION**:\n${inferredText}\n\n**DECISION**:\n${decisionText}\n\n**LIMITATIONS**:\n${limitationsText}${missingEvidenceBlock}${comparisonBlock}`;
   }
 
   private ensureThreeLevelsAnswer(contract: AnalysisContract): string {
@@ -1252,42 +1261,14 @@ ${decisionText}`;
       whyNotVerified: "This is a temporal change query. Establishing change requires comparing at least two observations acquired at different dates. Only a single observation was provided.",
       requiredObservation: "A comparable observation of this Area of Interest (AOI) from another acquisition date (e.g., baseline T1 or follow-up T2).",
       recommendedAction: "Use the Indian EO Data Connector to discover matching observations in official catalogues (ISRO NRSC Bhoonidhi Resourcesat-2A / Sentinel-1).",
-      answer: `**OBSERVED**:
-A single-epoch ${image.modality || 'optical'} observation was provided (${metrics.width}×${metrics.height} px, ${metrics.bandCount} bands, mean brightness: ${metrics.meanBrightness.toFixed(1)}, contrast ratio: ${metrics.contrastRatio.toFixed(1)}). Dominant visual land cover features, boundaries, and spatial surface textures are directly observable.
-
-**INFERRED**:
-Identifiable landscape features (such as water basins, agricultural parcels, or built structures) are visible in this epoch; their morphology is consistent with typical ground features (estimated likelihood: moderate to high; qualitative static assessment). However, temporal evolution, expansion, or shrinkage cannot be estimated from a single date.
-
-**VERIFIED**:
-Whether features increased, decreased, or remained unchanged cannot be established from a single image. Verifying temporal change strictly requires at least two comparable observations acquired at different dates (baseline T1 and subsequent T2).
-
-**NOT ESTABLISHED**:
-Increase, decrease, or stability cannot be proven without an earlier or later comparative observation.
-
-**REQUIRED EVIDENCE**:
-Comparable temporal baseline imagery (T1 and T2), appropriate spectral evidence, and artifact/illumination checks.
-
-**WHAT I CAN DETERMINE**:
-• Single-epoch spatial layout and visible land-cover features (${metrics.width}×${metrics.height} px).
-• Scene radiometric moments (mean brightness: ${metrics.meanBrightness.toFixed(1)}, contrast ratio: ${metrics.contrastRatio.toFixed(1)}).
-
-**WHAT I CANNOT DETERMINE**:
-• Whether land cover changed, expanded, or degraded over time.
-
-**WHY**:
-• Establishing change strictly requires comparing at least two observations acquired at different dates. Only a single observation was provided.
-
-**WHAT DATA IS REQUIRED**:
-• A comparable observation of this Area of Interest (AOI) from another acquisition date (baseline T1 or follow-up T2).
-
-**WHAT THE USER SHOULD UPLOAD**:
-• A second satellite image of this area from a different date to enable bi-temporal change analysis.`,
+      answer: '',
       limitations: [
         "Single-epoch imagery cannot establish rate, direction, or fact of change."
       ],
       modelConfidence: 'High'
     };
 
+    contract.answer = this.ensureFiveTierScientificAnswer(contract);
     const formattedAnswer = this.formatStandardizedAnswer(contract);
 
     const audit: AnalysisAudit = {
@@ -1382,18 +1363,12 @@ Comparable temporal baseline imagery (T1 and T2), appropriate spectral evidence,
       whyNotVerified: `${indexName} calculation is unavailable because the required Near-Infrared (NIR) and Red spectral bands were not identified in the image metadata.`,
       requiredObservation: `Calibrated multispectral GeoTIFF with NIR band (e.g., Sentinel-2 MSI Band 8 or Resourcesat-2A LISS-3 Band 4).`,
       recommendedAction: `Acquire multispectral imagery from ISRO NRSC Bhoonidhi (Resourcesat-2A LISS-3 or Sentinel-2).`,
-      answer: `**OBSERVED**:
-Supplied imagery contains ${image.bandCount || 3} channels (${image.modality || 'Optical'}, mean brightness: ${metrics?.meanBrightness?.toFixed(1) || '128.0'}, contrast: ${metrics?.contrastRatio?.toFixed(1) || '180.0'}). Spatial vegetation patterns, natural color variation, and land cover boundaries are directly visible in natural color. Calibrated Near-Infrared (NIR) reflectance channel is unavailable in raster metadata.
-
-**INFERRED**:
-Vegetative greenness and canopy texture are consistent with active photosynthetic plant cover (estimated likelihood: high via qualitative visual proxy and visible green-to-red contrast).
-
-**VERIFIED**:
-Quantitative physical ${indexName} values cannot be established from 3-channel consumer imagery. Authoritative spectral index calculations mathematically require calibrated narrow-band Near-Infrared (NIR, ~842 nm) reflectance data (e.g. Sentinel-2 Band 8 or Resourcesat-2A LISS-3 Band 4).`,
+      answer: '',
       limitations: [`Missing Near-Infrared (NIR) band in raster metadata.`],
       modelConfidence: 'HIGH'
     };
 
+    contract.answer = this.ensureFiveTierScientificAnswer(contract);
     const formattedAnswer = this.formatStandardizedAnswer(contract);
     const audit: AnalysisAudit = {
       depth: 'Deterministic Only',
@@ -1483,18 +1458,12 @@ Quantitative physical ${indexName} values cannot be established from 3-channel c
       whyNotVerified: "Exact geographic coordinates cannot be calculated. The supplied image does not contain authoritative GeoTIFF georeferencing tags (EPSG / projected CRS).",
       requiredObservation: "Georeferenced GeoTIFF with authoritative spatial coordinate system (e.g. EPSG:4326 or UTM projected).",
       recommendedAction: "Upload an orthorectified GeoTIFF from Bhoonidhi with valid spatial metadata tags.",
-      answer: `**OBSERVED**:
-Visible ground structures and landscape features can be resolved and localized in normalized relative pixel space [0–1000] (${image.width || metrics?.width || 512}×${image.height || metrics?.height || 512} px raster).
-
-**INFERRED**:
-Spatial arrangement, relative distances, and object footprints are consistent with standard ground infrastructure within the local scene frame (estimated likelihood: high; qualitative relative assessment).
-
-**VERIFIED**:
-Exact geographic coordinates (WGS84 latitude and longitude) cannot be established from this file. The raster lacks embedded GeoTIFF geospatial metadata (ModelTiepoint tags or an authoritative projected CRS / EPSG code).`,
+      answer: '',
       limitations: ["No embedded GeoTIFF CRS or affine transform."],
       modelConfidence: 'HIGH'
     };
 
+    contract.answer = this.ensureFiveTierScientificAnswer(contract);
     const formattedAnswer = this.formatStandardizedAnswer(contract);
     const audit: AnalysisAudit = {
       depth: 'Deterministic Only',

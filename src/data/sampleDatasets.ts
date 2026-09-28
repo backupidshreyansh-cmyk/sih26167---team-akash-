@@ -45,7 +45,7 @@ function svgToBase64(svg: string): string {
   return Buffer.from(cleaned).toString('base64');
 }
 
-// 1. VISAKHAPATNAM PORT (Optical)
+// 1. Synthetic Coastal & Port Illustration (Demo)
 const opticalCoastalSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
   <defs>
@@ -90,12 +90,12 @@ const opticalCoastalSvg = `
   <polygon points="280,150 330,135 340,165 290,180" fill="#10b981" stroke="#064e3b" stroke-width="2"/>
 
   <!-- Coordinate Grid Overlay Overlay -->
-  <text x="20" y="40" fill="#38bdf8" font-family="monospace" font-size="14" font-weight="bold">ISRO EO OPTICAL L2A [RGB-TRUECOLOR] 10m/px</text>
-  <text x="20" y="60" fill="#94a3b8" font-family="monospace" font-size="12">EPSG:32644 (UTM Zone 44N) | Visakhapatnam Port</text>
+  <text x="20" y="40" fill="#38bdf8" font-family="monospace" font-size="14" font-weight="bold">SYNTHETIC DEMO ILLUSTRATION (Not real satellite data)</text>
+  <text x="20" y="60" fill="#94a3b8" font-family="monospace" font-size="12">Synthetic Coastal Scene | Visible colors: blue, green, gray</text>
 </svg>
 `;
 
-// 2. SAR RADAR (Sentinel-1 C-Band VV/VH backscatter)
+// 2. Synthetic Radar Texture Illustration (Demo)
 const sarRadarSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
   <defs>
@@ -138,12 +138,12 @@ const sarRadarSvg = `
   </g>
 
   <!-- SAR Flight & Sensor Indicators -->
-  <text x="20" y="40" fill="#facc15" font-family="monospace" font-size="14" font-weight="bold">SENTINEL-1 SAR C-BAND [VV/VH INTENSITY] 10m/px</text>
-  <text x="20" y="60" fill="#94a3b8" font-family="monospace" font-size="12">Polarization: Dual VV/VH | Incidence Angle: 38.4°</text>
+  <text x="20" y="40" fill="#facc15" font-family="monospace" font-size="14" font-weight="bold">SYNTHETIC DEMO ILLUSTRATION (Not real satellite data)</text>
+  <text x="20" y="60" fill="#94a3b8" font-family="monospace" font-size="12">Synthetic Radar Texture | High/low intensity contrast simulation</text>
 </svg>
 `;
 
-// 3. BEFORE: BENGALURU OUTER RING (2021 T1)
+// 3. Synthetic Before Scene Illustration
 const beforeExpansionSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
   <defs>
@@ -168,12 +168,12 @@ const beforeExpansionSvg = `
   <!-- Single Narrow Dirt Track Road -->
   <path d="M 0,400 Q 380,390 800,420" stroke="#d4a373" stroke-width="6" fill="none"/>
 
-  <text x="20" y="40" fill="#86efac" font-family="monospace" font-size="14" font-weight="bold">TEMPORAL OBSERVATION T1 (BEFORE: 2021-03-12)</text>
-  <text x="20" y="60" fill="#e2e8f0" font-family="monospace" font-size="12">Sensor: Sentinel-2 MSI L2A | Land Cover: Dominant Agriculture &amp; Vegetation</text>
+  <text x="20" y="40" fill="#86efac" font-family="monospace" font-size="14" font-weight="bold">SYNTHETIC DEMO ILLUSTRATION: BEFORE SCENE (Not real satellite data)</text>
+  <text x="20" y="60" fill="#e2e8f0" font-family="monospace" font-size="12">Synthetic Illustration | Predominantly green-toned field shapes</text>
 </svg>
 `;
 
-// 4. AFTER: BENGALURU OUTER RING (2024 T2)
+// 4. Synthetic After Scene Illustration
 const afterExpansionSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
   <defs>
@@ -204,12 +204,12 @@ const afterExpansionSvg = `
   <!-- Shrunken Water Retention Basin -->
   <path d="M 450,180 Q 490,140 530,190 T 480,240 Z" fill="#0077b6"/>
 
-  <text x="20" y="40" fill="#f87171" font-family="monospace" font-size="14" font-weight="bold">TEMPORAL OBSERVATION T2 (AFTER: 2024-03-18)</text>
-  <text x="20" y="60" fill="#e2e8f0" font-family="monospace" font-size="12">Sensor: Sentinel-2 MSI L2A | Land Cover: High Built-Up Expansion (+34.2%)</text>
+  <text x="20" y="40" fill="#f87171" font-family="monospace" font-size="14" font-weight="bold">SYNTHETIC DEMO ILLUSTRATION: AFTER SCENE (Not real satellite data)</text>
+  <text x="20" y="60" fill="#e2e8f0" font-family="monospace" font-size="12">Synthetic Illustration | Distinct linear dark path and grid patterns</text>
 </svg>
 `;
 
-// 5. CLOUD OBSCURED (Optical)
+// 5. Synthetic Cloud Obscured Scene Illustration
 const cloudObscuredSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
   <defs>
@@ -229,37 +229,37 @@ const cloudObscuredSvg = `
   <!-- Cloud Shadow on Ground -->
   <ellipse cx="480" cy="540" rx="160" ry="90" fill="#020617" opacity="0.6" filter="url(#cloudBlur)"/>
 
-  <text x="20" y="40" fill="#f43f5e" font-family="monospace" font-size="14" font-weight="bold">OPTICAL SENSOR: HEAVY MONSOON CLOUD COVER</text>
-  <text x="20" y="60" fill="#cbd5e1" font-family="monospace" font-size="12">Ground surface obscured (&gt;65% cloud fraction)</text>
+  <text x="20" y="40" fill="#f43f5e" font-family="monospace" font-size="14" font-weight="bold">SYNTHETIC DEMO ILLUSTRATION: CLOUD OVERLAY (Not real satellite data)</text>
+  <text x="20" y="60" fill="#cbd5e1" font-family="monospace" font-size="12">Synthetic Illustration | White opaque shapes over dark background</text>
 </svg>
 `;
 
 export const SAMPLE_DATASETS: SampleDataset[] = [
   {
     id: 'optical_port_scene',
-    title: 'Visakhapatnam Port Coastal Infrastructure',
-    badge: 'Optical Scene',
+    title: 'Synthetic Coastal & Port Scene',
+    badge: 'Synthetic Illustration',
     sampleType: 'Demo / synthetic example',
-    description: 'Synthesized coastal scene with deep maritime water, breakwater pier, docked cargo vessels, and container logistics terminals.',
+    description: 'Synthesized vector illustration depicting coastal water, shoreline, pier, and grid patterns.',
     recommendedQueries: [
-      'What is visible in this image?',
-      'Identify maritime infrastructure, docks, and coastal boundary',
-      'Where is the built-up area?'
+      'What colors and shapes are visible in this image?',
+      'Is green vegetation present?',
+      'Describe the visible features, colors, and patterns.'
     ],
     images: [
       {
         slot: 'optical',
-        name: 'visakhapatnam_port_synthetic.tif',
+        name: 'synthetic_coastal_illustration.tif',
         mimeType: 'image/svg+xml',
         svgContent: opticalCoastalSvg,
         metadata: {
           width: 800,
           height: 800,
           bandCount: 3,
-          crs: 'WGS 84 / UTM zone 44N',
-          epsg: 32644,
-          bounds: [742100, 1958200, 750100, 1966200],
-          pixelSize: [10, 10],
+          crs: 'Local Pixel Coordinates',
+          epsg: 0,
+          bounds: [0, 0, 800, 800],
+          pixelSize: [1, 1],
           isTiff: true
         }
       }
@@ -267,45 +267,45 @@ export const SAMPLE_DATASETS: SampleDataset[] = [
   },
   {
     id: 'bitemporal_expansion',
-    title: 'Bengaluru Urban Growth (Temporal Change)',
-    badge: 'Temporal Pair',
+    title: 'Synthetic Temporal Pair (Before / After)',
+    badge: 'Synthetic Pair',
     sampleType: 'Demo / synthetic example',
-    description: 'Matched synthetic temporal pair demonstrating agricultural land conversion into multi-lane asphalt highway and built-up development.',
+    description: 'Matched synthetic temporal illustrations demonstrating visible differences in shapes and colors between two scenes.',
     recommendedQueries: [
-      'Did built-up area increase between these observations?',
-      'Identify candidate physical change regions and ground them',
-      'Did the water extent change between these dates?'
+      'What differences in colors and shapes are visible between these two images?',
+      'What visible features stayed the same between before and after?',
+      'Describe differences in color regions between the two scenes.'
     ],
     images: [
       {
         slot: 'before',
-        name: 'bengaluru_expansion_t1_synthetic.tif',
+        name: 'synthetic_before_scene.tif',
         mimeType: 'image/svg+xml',
         svgContent: beforeExpansionSvg,
         metadata: {
           width: 800,
           height: 800,
           bandCount: 3,
-          crs: 'WGS 84 / UTM zone 43N',
-          epsg: 32643,
-          bounds: [682000, 1432000, 690000, 1440000],
-          pixelSize: [10, 10],
+          crs: 'Local Pixel Coordinates',
+          epsg: 0,
+          bounds: [0, 0, 800, 800],
+          pixelSize: [1, 1],
           isTiff: true
         }
       },
       {
         slot: 'after',
-        name: 'bengaluru_expansion_t2_synthetic.tif',
+        name: 'synthetic_after_scene.tif',
         mimeType: 'image/svg+xml',
         svgContent: afterExpansionSvg,
         metadata: {
           width: 800,
           height: 800,
           bandCount: 3,
-          crs: 'WGS 84 / UTM zone 43N',
-          epsg: 32643,
-          bounds: [682000, 1432000, 690000, 1440000],
-          pixelSize: [10, 10],
+          crs: 'Local Pixel Coordinates',
+          epsg: 0,
+          bounds: [0, 0, 800, 800],
+          pixelSize: [1, 1],
           isTiff: true
         }
       }
@@ -313,30 +313,30 @@ export const SAMPLE_DATASETS: SampleDataset[] = [
   },
   {
     id: 'sar_radar_complex',
-    title: 'Industrial Radar Backscatter (SAR C-Band)',
-    badge: 'SAR Radar',
+    title: 'Synthetic Radar Backscatter Scene',
+    badge: 'Synthetic Radar',
     sampleType: 'Demo / synthetic example',
-    description: 'Microwave radar simulation showcasing double-bounce vertical returns, rough surface scatter, and specular water absorption.',
+    description: 'Simulated radar illustration showcasing dark specular surfaces, textured gray speckle, and bright reflectors.',
     recommendedQueries: [
-      'Evaluate radar backscatter intensity and structural permanence',
-      'Assess smooth specular surfaces vs rough double-bounce returns',
-      'Identify potential metallic or vertical built structures'
+      'Describe the visible textures and light/dark regions.',
+      'What geometric shapes or bright reflectors are visible?',
+      'Are smooth dark specular surfaces visible?'
     ],
     images: [
       {
         slot: 'sar',
-        name: 'industrial_sar_cband_synthetic.tif',
+        name: 'synthetic_radar_texture.tif',
         mimeType: 'image/svg+xml',
         svgContent: sarRadarSvg,
         metadata: {
           width: 800,
           height: 800,
           bandCount: 1,
-          crs: 'WGS 84 / UTM zone 44N',
-          epsg: 32644,
-          bounds: [742100, 1958200, 750100, 1966200],
-          pixelSize: [10, 10],
-          polarization: 'VV/VH',
+          crs: 'Local Pixel Coordinates',
+          epsg: 0,
+          bounds: [0, 0, 800, 800],
+          pixelSize: [1, 1],
+          polarization: 'Simulated VV',
           isTiff: true
         }
       }
@@ -344,46 +344,46 @@ export const SAMPLE_DATASETS: SampleDataset[] = [
   },
   {
     id: 'crossmodal_cloud_penetration',
-    title: 'Monsoon Cloud Obscuration vs SAR Penetration',
-    badge: 'Optical + SAR',
+    title: 'Synthetic Multi-Sensor Pair (Optical + Radar)',
+    badge: 'Synthetic Multi-Sensor',
     sampleType: 'Demo / synthetic example',
-    description: 'Synthetic cross-modal demonstration: optical image suffers dense cloud cover, while microwave SAR penetrates clouds to inspect ground features.',
+    description: 'Synthetic demonstration showing an optical color view with cloud shapes alongside a synthetic radar texture.',
     recommendedQueries: [
-      'Compare optical observation with SAR radar backscatter',
-      'Verify structural features obscured by cloud cover using SAR radar penetration',
-      'Check for cross-modal agreement or sensor conflict'
+      'What colors and patterns are visible across these two images?',
+      'Compare the visible shapes and textures between the two observations.',
+      'What visible patterns and brightness differences appear between the two scenes?'
     ],
     images: [
       {
         slot: 'optical',
-        name: 'optical_monsoon_cloud_cover.tif',
+        name: 'synthetic_cloud_optical.tif',
         mimeType: 'image/svg+xml',
         svgContent: cloudObscuredSvg,
         metadata: {
           width: 800,
           height: 800,
           bandCount: 3,
-          crs: 'WGS 84 / UTM zone 44N',
-          epsg: 32644,
-          bounds: [742100, 1958200, 750100, 1966200],
-          pixelSize: [10, 10],
+          crs: 'Local Pixel Coordinates',
+          epsg: 0,
+          bounds: [0, 0, 800, 800],
+          pixelSize: [1, 1],
           isTiff: true
         }
       },
       {
         slot: 'sar',
-        name: 'sar_allweather_radar_penetration.tif',
+        name: 'synthetic_penetration_radar.tif',
         mimeType: 'image/svg+xml',
         svgContent: sarRadarSvg,
         metadata: {
           width: 800,
           height: 800,
           bandCount: 1,
-          crs: 'WGS 84 / UTM zone 44N',
-          epsg: 32644,
-          bounds: [742100, 1958200, 750100, 1966200],
-          pixelSize: [10, 10],
-          polarization: 'VV/VH',
+          crs: 'Local Pixel Coordinates',
+          epsg: 0,
+          bounds: [0, 0, 800, 800],
+          pixelSize: [1, 1],
+          polarization: 'Simulated VV',
           isTiff: true
         }
       }

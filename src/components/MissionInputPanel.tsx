@@ -329,7 +329,7 @@ export function MissionInputPanel({
           /* VIEW 2: SIH 26167 Benchmark Presets */
           <div className="space-y-3">
             <div className="text-[11px] text-slate-400">
-              Load pre-configured remote sensing benchmark scenarios for instant SIH judging evaluation:
+              Load pre-configured synthetic illustration scenarios for interactive demo evaluation:
             </div>
 
             <div className="space-y-2.5">

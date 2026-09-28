@@ -23,114 +23,107 @@ export interface DemoPreset {
 export const DEMO_PRESETS: DemoPreset[] = [
   {
     id: 'preset-optical-port',
-    title: 'Optical Maritime & Port Facility',
-    subtitle: 'Sentinel-2 MSI (10m VNIR)',
-    badge: 'OPTICAL VQA & GROUNDING',
-    description: 'High-resolution optical nadir observation of coastal port, cargo ships, docks, and urban infrastructure.',
+    title: 'Synthetic Coastal & Port Illustration',
+    subtitle: 'Synthetic Demo Illustration (Not real satellite data)',
+    badge: 'DEMO ILLUSTRATION',
+    description: 'Synthetic vector illustration showing coastal water, shoreline, pier, and grid patterns.',
     mode: 'single',
-    query: 'Describe the maritime port infrastructure, characterize the land cover, and ground visible ships and docks with bounding boxes.',
+    query: 'What colors and shapes are visible in this illustration?',
     images: [
       {
         url: '/samples/optical_port.png',
-        filename: 'sentinel2_port_optical.png',
+        filename: 'synthetic_coastal_illustration.png',
         modality: 'OPTICAL',
-        sensor: 'Sentinel-2 MSI (VNIR)',
-        crs: 'WGS 84 / UTM zone 43N',
-        epsg: 32643
+        sensor: 'Synthetic Illustration (Demo)',
+        crs: 'Local Pixel Coordinates'
       }
     ]
   },
   {
     id: 'preset-sar-radar',
-    title: 'Sentinel-1 SAR Coastal Radar',
-    subtitle: 'C-Band Synthetic Aperture Radar',
-    badge: 'SAR BACKSCATTER',
-    description: 'Microwave radar backscatter showing specular reflection on calm sea and metallic double-bounce returns on structures.',
+    title: 'Synthetic Radar Backscatter Illustration',
+    subtitle: 'Synthetic Demo Illustration (Not real satellite data)',
+    badge: 'DEMO ILLUSTRATION',
+    description: 'Synthetic illustration simulating dark specular returns, textured gray speckle, and bright corner reflectors.',
     mode: 'single',
-    query: 'Analyze the radar backscatter intensity, specular reflection across the water surface, and structural double-bounce returns. Clearly distinguish observed evidence from interpretation.',
+    query: 'Describe the visible textures and light/dark regions.',
     images: [
       {
         url: '/samples/sar_radar.png',
-        filename: 'sentinel1_cband_sar.png',
+        filename: 'synthetic_radar_illustration.png',
         modality: 'SAR',
-        polarization: 'VV/VH',
-        sensor: 'Sentinel-1 C-Band SAR',
-        crs: 'WGS 84 / UTM zone 43N',
-        epsg: 32643
+        polarization: 'Simulated VV',
+        sensor: 'Synthetic Illustration (Demo)',
+        crs: 'Local Pixel Coordinates'
       }
     ]
   },
   {
     id: 'preset-cross-modal',
-    title: 'Optical + SAR Cross-Modal Verification',
-    subtitle: 'Dual-Sensor Complementary Analysis',
-    badge: 'CROSS-MODAL ARBITRATION',
-    description: 'Synchronized Optical RGB and Sentinel-1 SAR observations over the same coastal sector to arbitrate physical presence.',
+    title: 'Synthetic Cross-Modal Demonstration',
+    subtitle: 'Synthetic Demo Pair (Not real satellite data)',
+    badge: 'DEMO ILLUSTRATION',
+    description: 'Paired synthetic illustrations showing an optical color view alongside a synthetic radar texture.',
     mode: 'optical-sar',
-    query: 'What complementary evidence do the optical and SAR observations provide regarding coastal structures and vessel presence? Do the modalities agree or conflict?',
+    query: 'What colors and patterns are visible across these two illustrations?',
     images: [
       {
         url: '/samples/optical_port.png',
-        filename: 'port_observation_optical.png',
+        filename: 'synthetic_coastal_optical.png',
         modality: 'OPTICAL',
         role: 'PRIMARY',
-        sensor: 'Sentinel-2 MSI',
-        epsg: 32643
+        sensor: 'Synthetic Illustration (Demo)'
       },
       {
         url: '/samples/sar_radar.png',
-        filename: 'port_observation_sar.png',
+        filename: 'synthetic_coastal_radar.png',
         modality: 'SAR',
         role: 'AFTER',
-        polarization: 'VV/VH',
-        sensor: 'Sentinel-1 SAR',
-        epsg: 32643
+        polarization: 'Simulated VV',
+        sensor: 'Synthetic Illustration (Demo)'
       }
     ]
   },
   {
     id: 'preset-bitemporal',
-    title: 'Bi-Temporal Flood Change Detection',
-    subtitle: 'T1 Pre-Event vs T2 Post-Event',
-    badge: 'CHANGE ANALYSIS',
-    description: 'Time 1 baseline dry season vs Time 2 post-monsoon flood inundation across agricultural river basin.',
+    title: 'Synthetic Temporal Pair (Before / After)',
+    subtitle: 'Synthetic Demo Pair (Not real satellite data)',
+    badge: 'DEMO ILLUSTRATION',
+    description: 'Two synthetic illustrations showing different colored regions between before and after scenes.',
     mode: 'bi-temporal',
-    query: 'Identify and delineate the candidate flood inundation changes between T1 (Before) and T2 (After), distinguishing real physical changes from sensor or seasonal artifacts.',
+    query: 'What differences in colors and shapes are visible between these two illustrations?',
     images: [
       {
         url: '/samples/bitemporal_before.png',
-        filename: 'flood_t1_pre_event.png',
+        filename: 'synthetic_before_scene.png',
         modality: 'OPTICAL',
         role: 'BEFORE',
-        sensor: 'Multi-Temporal Optical',
-        epsg: 32643
+        sensor: 'Synthetic Illustration (Demo)'
       },
       {
         url: '/samples/bitemporal_after.png',
-        filename: 'flood_t2_post_event.png',
+        filename: 'synthetic_after_scene.png',
         modality: 'OPTICAL',
         role: 'AFTER',
-        sensor: 'Multi-Temporal Optical',
-        epsg: 32643
+        sensor: 'Synthetic Illustration (Demo)'
       }
     ]
   },
   {
     id: 'preset-integrity-gate',
-    title: 'Falsifiability & Inconclusive Gate',
-    subtitle: 'Safety & Hallucination Prevention',
-    badge: 'INTEGRITY TEST',
-    description: 'Tests system honesty when presented with an impossible or ungrounded question requiring subsurface or chemical data.',
+    title: 'Safety & Abstention Gate Check',
+    subtitle: 'Synthetic Demo Illustration (Not real satellite data)',
+    badge: 'DEMO ILLUSTRATION',
+    description: 'Demonstrates system honesty: abstains with plain language when asked questions requiring data not visible in the pixels.',
     mode: 'single',
-    query: 'What is the exact water depth in meters, water salinity percentage, and sub-surface submarine movements in the water body?',
+    query: 'What is the exact water depth in meters and water salinity percentage?',
     images: [
       {
         url: '/samples/sar_radar.png',
-        filename: 'sar_integrity_check.png',
+        filename: 'synthetic_abstention_check.png',
         modality: 'SAR',
-        polarization: 'VV',
-        sensor: 'Sentinel-1 SAR',
-        epsg: 32643
+        polarization: 'Simulated VV',
+        sensor: 'Synthetic Illustration (Demo)'
       }
     ]
   }

@@ -76,7 +76,7 @@ export const SensorImageryBay: React.FC<SensorImageryBayProps> = ({
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles size={12} className="text-amber-400" />
-              Pre-Flight Demo Missions
+              Synthetic Demo Illustrations
             </span>
             <span className="text-[9px] text-slate-500 font-mono">1-CLICK LOAD</span>
           </div>

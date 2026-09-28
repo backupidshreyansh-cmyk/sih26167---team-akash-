@@ -48,6 +48,7 @@ export function UnifiedQuestionResultPanel({
   const [eoSearchError, setEoSearchError] = useState<string | null>(null);
 
   // Dynamic suggestion questions based on current input configuration
+  // Keep suggestions honest and straightforward, asking only about visible colors, shapes, textures, and patterns
   const dynamicSuggestions = React.useMemo(() => {
     const hasSar = images.some(i => i.slot === 'sar' || i.metadata?.modality === 'SAR');
     const isTemporal = images.length === 2 && (images.some(i => i.slot === 'before') || images.some(i => i.slot === 'after'));
@@ -55,40 +56,32 @@ export function UnifiedQuestionResultPanel({
 
     if (isCrossModal) {
       return [
-        "Compare optical observation with SAR radar backscatter.",
-        "Verify if visual features correspond to permanent physical structures.",
-        "Check for cross-modal agreement or sensor conflict."
+        "What colors and patterns are visible across these two images?",
+        "Compare the visible shapes and textures between the two observations.",
+        "Are there features visible in one observation that differ in the other?"
       ];
     }
 
     if (isTemporal) {
       return [
-        "Did built-up area increase between these observations?",
-        "Identify candidate physical change regions and ground them.",
-        "Did the water extent change between these dates?"
+        "What differences in colors and shapes are visible between these two images?",
+        "What visible features stayed the same between before and after?",
+        "Describe differences in color regions between the two scenes."
       ];
     }
 
     if (hasSar) {
       return [
-        "Evaluate radar backscatter intensity and structural permanence.",
-        "Assess smooth specular surfaces vs rough double-bounce returns.",
-        "Identify potential metallic or vertical built structures."
-      ];
-    }
-
-    if (images.length === 1) {
-      return [
-        "What is visible in this imagery?",
-        "Where is the built-up area?",
-        "Describe dominant land cover classes in this scene."
+        "Describe the visible textures and light/dark regions.",
+        "What geometric shapes or bright reflectors are visible?",
+        "Are smooth dark specular surfaces visible?"
       ];
     }
 
     return [
-      "What is visible in this imagery?",
-      "Where is the built-up area?",
-      "Did the water extent change?"
+      "What is visible in this image?",
+      "Is vegetation present?",
+      "Describe the visible features, colors, and patterns."
     ];
   }, [images]);
 
@@ -298,118 +291,18 @@ export function UnifiedQuestionResultPanel({
           </div>
         ) : (
           <div className="space-y-3.5">
-            
-            {/* A. DECISION GATE (PRIMARY STATUS) */}
-            <div className={`p-3.5 rounded-xl border ${decision.borderColor} ${decision.bgColor}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
-                  Decision
-                </span>
-                <div className="flex items-center gap-1.5">
-                  {decision.icon}
-                  <span className={`text-xs font-bold uppercase tracking-wider ${decision.textColor}`}>
-                    {decision.label}
-                  </span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-snug">
-                {decision.description}
-              </p>
-            </div>
 
-            {/* B. PRIMARY ANSWER */}
+            {/* 1. DIRECT OBSERVATIONS (FIRST) */}
             <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
               <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-                <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider">
-                  Answer
-                </span>
-              </div>
-              <div className="prose prose-sm prose-invert max-w-none text-slate-100 text-xs leading-relaxed">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {latestResponse.answer}
-                </ReactMarkdown>
-              </div>
-            </div>
-
-            {/* MULTI-IMAGE COMPARATIVE ANALYSIS */}
-            {multiImageComparison && (
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-indigo-900/50 space-y-2.5">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                  <span className="text-[10px] font-mono font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers size={13} className="text-indigo-400" />
-                    Comparative Analysis
-                  </span>
-                  <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950 px-2 py-0.5 rounded border border-indigo-900/60">
-                    {multiImageComparison.relationshipLabel}
-                  </span>
-                </div>
-
-                {multiImageComparison.summary && (
-                  <p className="text-xs text-slate-300 leading-snug">
-                    {multiImageComparison.summary}
-                  </p>
-                )}
-
-                <div className="space-y-2 pt-1">
-                  {/* What Changed / Differs */}
-                  {multiImageComparison.whatChangedOrDiffers && multiImageComparison.whatChangedOrDiffers.length > 0 && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-                        What Changed / Differs
-                      </span>
-                      <ul className="text-xs text-slate-300 space-y-1 pl-3.5 list-disc marker:text-cyan-400">
-                        {multiImageComparison.whatChangedOrDiffers.map((item: string, idx: number) => (
-                          <li key={idx} className="leading-snug">{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* What Stayed the Same */}
-                  {multiImageComparison.whatStayedSame && multiImageComparison.whatStayedSame.length > 0 && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                        What Stayed the Same
-                      </span>
-                      <ul className="text-xs text-slate-300 space-y-1 pl-3.5 list-disc marker:text-emerald-400">
-                        {multiImageComparison.whatStayedSame.map((item: string, idx: number) => (
-                          <li key={idx} className="leading-snug">{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* What Cannot Be Compared */}
-                  {multiImageComparison.whatCannotBeCompared && multiImageComparison.whatCannotBeCompared.length > 0 && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                        Incomparable Differences (Sensor, Angle, or Resolution)
-                      </span>
-                      <ul className="text-xs text-slate-400 space-y-1 pl-3.5 list-disc marker:text-amber-400">
-                        {multiImageComparison.whatCannotBeCompared.map((item: string, idx: number) => (
-                          <li key={idx} className="leading-snug">{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* C. WHAT THE DATA SHOWS */}
-            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
                 <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <CheckCircle2 size={13} className="text-emerald-400" />
-                  What the Data Shows
+                  Direct Observations
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">Observed &amp; Measured</span>
+                <span className="text-[10px] text-slate-500 font-mono">Directly Visible &amp; Measured</span>
               </div>
-              <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc marker:text-emerald-400">
-                {observedAndMeasured.slice(0, 4).map((obs: any, idx: number) => (
+              <ul className="text-xs text-slate-200 space-y-1.5 pl-4 list-disc marker:text-emerald-400">
+                {observedAndMeasured.slice(0, 5).map((obs: any, idx: number) => (
                   <li key={idx} className="leading-snug">
                     {typeof obs === 'string' ? obs : obs.text}
                   </li>
@@ -417,15 +310,15 @@ export function UnifiedQuestionResultPanel({
               </ul>
             </div>
 
-            {/* C2. WHAT THE EVIDENCE SUGGESTS (INFERRED) */}
+            {/* 2. INTERPRETATION (WHAT THE EVIDENCE SUGGESTS) */}
             {inferred.length > 0 && (
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
                   <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Compass size={13} className="text-sky-400" />
-                    What the Evidence Suggests
+                    Interpretation
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Inferred / Estimated</span>
+                  <span className="text-[10px] text-slate-500 font-mono">What the Evidence Suggests</span>
                 </div>
                 <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc marker:text-sky-400">
                   {inferred.slice(0, 4).map((inf: any, idx: number) => (
@@ -437,54 +330,37 @@ export function UnifiedQuestionResultPanel({
               </div>
             )}
 
-            {/* D. WHAT THE DATA DOES NOT ESTABLISH */}
-            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
-                <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <AlertTriangle size={13} className="text-amber-400" />
-                  What the Data Does Not Establish
+            {/* 3. DECISION (VERIFIED / INCONCLUSIVE) & DIRECT ANSWER */}
+            <div className={`p-4 rounded-xl border ${decision.borderColor} ${decision.bgColor} space-y-2.5`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
+                  Final Decision
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">Unverified Boundary</span>
-              </div>
-              <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc marker:text-amber-400">
-                {notEstablished.slice(0, 3).map((notEst: string, idx: number) => (
-                  <li key={idx} className="leading-snug">{notEst}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* E. EVIDENCE USED & CONTRADICTION CHECK */}
-            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
-                <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider">
-                  Evidence
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">Grounded Inputs</span>
-              </div>
-              <ul className="text-xs text-slate-300 space-y-1 pl-4 list-disc marker:text-blue-400">
-                {evidenceUsed.map((ev, idx) => (
-                  <li key={idx} className="leading-snug">{ev}</li>
-                ))}
-              </ul>
-
-              <div className="pt-2 border-t border-slate-900">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 font-medium">Contradictions Detected:</span>
-                  <span className={`text-[11px] font-semibold ${contradictions.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {contradictions.length > 0 ? `${contradictions.length} conflict(s)` : 'None detected'}
+                <div className="flex items-center gap-1.5">
+                  {decision.icon}
+                  <span className={`text-xs font-bold uppercase tracking-wider ${decision.textColor}`}>
+                    {decision.label}
                   </span>
                 </div>
-                {contradictions.length > 0 && (
-                  <ul className="text-xs text-rose-300/90 space-y-1 pl-4 list-disc marker:text-rose-500 mt-1">
-                    {contradictions.map((con: string, idx: number) => (
-                      <li key={idx} className="leading-snug">{con}</li>
-                    ))}
-                  </ul>
-                )}
+              </div>
+              <p className="text-xs text-slate-300 leading-snug">
+                {decision.description}
+              </p>
+
+              {/* Direct Answer */}
+              <div className="pt-2 border-t border-slate-800/60">
+                <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                  Answer Summary
+                </span>
+                <div className="prose prose-sm prose-invert max-w-none text-slate-100 text-xs leading-relaxed">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {latestResponse.answer}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
 
-            {/* F. LIMITATIONS */}
+            {/* 4. LIMITATIONS */}
             {limitations.length > 0 && (
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
                 <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider block">
@@ -498,35 +374,42 @@ export function UnifiedQuestionResultPanel({
               </div>
             )}
 
-            {/* G. AUTOMATIC SEARCH FOR MISSING EVIDENCE (When NEEDS MORE DATA or INCONCLUSIVE) */}
+            {/* 5. MISSING EVIDENCE IN PLAIN LANGUAGE (When system abstains or inconclusive) */}
             {(decision.label === 'NEEDS MORE DATA' || decision.label === 'INCONCLUSIVE' || latestResponse.contract?.whyNotVerified) && (
-              <div className="bg-slate-950 border border-blue-900/40 p-3.5 rounded-xl space-y-2.5">
+              <div className="bg-slate-950 border border-amber-900/40 p-4 rounded-xl space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                  <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Database size={13} />
-                    Missing Evidence &amp; Acquisition
+                  <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertTriangle size={13} className="text-amber-400" />
+                    Missing Evidence &amp; Guidance
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    ISRO Bhoonidhi / MOSDAC
+                    Plain-Language Explanation
                   </span>
                 </div>
 
-                {latestResponse.contract?.whyNotVerified && (
+                <div>
+                  <span className="text-[10px] font-semibold text-slate-400 block mb-0.5">Why the system abstained:</span>
+                  <p className="text-xs text-slate-200 leading-snug">
+                    {latestResponse.contract?.whyNotVerified || latestResponse.contract?.why || "Available evidence supports observable pixels and plausible interpretations, but does not establish quantitative proof or causal attribution."}
+                  </p>
+                </div>
+
+                {latestResponse.contract?.whatDataIsRequired && (
                   <div>
-                    <span className="text-[10px] text-slate-400 block mb-0.5">Why not verified:</span>
-                    <p className="text-xs text-slate-200 leading-snug">{latestResponse.contract.whyNotVerified}</p>
+                    <span className="text-[10px] font-semibold text-slate-400 block mb-0.5">Required evidence to verify:</span>
+                    <p className="text-xs text-blue-300 leading-snug">{latestResponse.contract.whatDataIsRequired}</p>
                   </div>
                 )}
 
-                {latestResponse.contract?.requiredObservation && (
+                {latestResponse.contract?.whatTheUserShouldUpload && (
                   <div>
-                    <span className="text-[10px] text-slate-400 block mb-0.5">Required observation:</span>
-                    <p className="text-xs text-blue-300 leading-snug">{latestResponse.contract.requiredObservation}</p>
+                    <span className="text-[10px] font-semibold text-slate-400 block mb-0.5">Recommended upload:</span>
+                    <p className="text-xs text-emerald-300 leading-snug">{latestResponse.contract.whatTheUserShouldUpload}</p>
                   </div>
                 )}
 
-                {/* Single Search Button */}
-                <div className="pt-1">
+                {/* Search Bhoonidhi Button */}
+                <div className="pt-2 border-t border-slate-900">
                   <button
                     type="button"
                     onClick={handleDiscoverEoData}
@@ -579,6 +462,71 @@ export function UnifiedQuestionResultPanel({
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* MULTI-IMAGE COMPARATIVE ANALYSIS */}
+            {multiImageComparison && (
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-indigo-900/50 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                  <span className="text-[10px] font-mono font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers size={13} className="text-indigo-400" />
+                    Comparative Analysis
+                  </span>
+                  <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950 px-2 py-0.5 rounded border border-indigo-900/60">
+                    {multiImageComparison.relationshipLabel}
+                  </span>
+                </div>
+
+                {multiImageComparison.summary && (
+                  <p className="text-xs text-slate-300 leading-snug">
+                    {multiImageComparison.summary}
+                  </p>
+                )}
+
+                <div className="space-y-2 pt-1">
+                  {multiImageComparison.whatChangedOrDiffers && multiImageComparison.whatChangedOrDiffers.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                        What Changed / Differs
+                      </span>
+                      <ul className="text-xs text-slate-300 space-y-1 pl-3.5 list-disc marker:text-cyan-400">
+                        {multiImageComparison.whatChangedOrDiffers.map((item: string, idx: number) => (
+                          <li key={idx} className="leading-snug">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {multiImageComparison.whatStayedSame && multiImageComparison.whatStayedSame.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        What Stayed the Same
+                      </span>
+                      <ul className="text-xs text-slate-300 space-y-1 pl-3.5 list-disc marker:text-emerald-400">
+                        {multiImageComparison.whatStayedSame.map((item: string, idx: number) => (
+                          <li key={idx} className="leading-snug">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {multiImageComparison.whatCannotBeCompared && multiImageComparison.whatCannotBeCompared.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        Incomparable Differences (Sensor, Angle, or Resolution)
+                      </span>
+                      <ul className="text-xs text-slate-400 space-y-1 pl-3.5 list-disc marker:text-amber-400">
+                        {multiImageComparison.whatCannotBeCompared.map((item: string, idx: number) => (
+                          <li key={idx} className="leading-snug">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
