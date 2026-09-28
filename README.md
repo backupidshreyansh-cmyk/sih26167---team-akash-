@@ -1,4 +1,9 @@
 # SatQuery AI
+## Live Demo
+
+🚀 **[Open SatQuery AI](https://satquery-ai-3yh1.onrender.com/)**
+
+Evidence-driven multimodal satellite image analysis through natural-language queries.
 
 ## Evidence-Driven Satellite Intelligence
 
