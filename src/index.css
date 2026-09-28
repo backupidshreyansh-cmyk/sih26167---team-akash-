@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #030712;
+  color: #f1f5f9;
+  overflow: hidden;
+  background-image: 
+    radial-gradient(ellipse 60% 40% at 15% 5%, rgba(6, 182, 212, 0.15), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 85% 10%, rgba(99, 102, 241, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 95%, rgba(16, 185, 129, 0.08), transparent 60%),
+    linear-gradient(to bottom, #030712, #060b18);
+  background-attachment: fixed;
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(3, 7, 18, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.6);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.7);
+}
+
+/* Glowing aerospace elements */
+.glow-cyan-sm {
+  box-shadow: 0 0 10px -1px rgba(6, 182, 212, 0.4);
+}
+
+.glow-cyan-md {
+  box-shadow: 0 0 20px -2px rgba(6, 182, 212, 0.45);
+}
+
+.glow-cyan-lg {
+  box-shadow: 0 0 32px 0 rgba(6, 182, 212, 0.35);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px -2px rgba(16, 185, 129, 0.45);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 20px -2px rgba(99, 102, 241, 0.45);
+}
+
+.glow-rose {
+  box-shadow: 0 0 20px -2px rgba(244, 63, 94, 0.45);
+}
+
+/* Subtle satellite grid background */
+.bg-grid-pattern {
+  background-size: 28px 28px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+/* Radar scan sweep animation */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-radar {
+  animation: radar-sweep 4s linear infinite;
+}
+
+/* Luminous Glass Panels */
+.glass-panel {
+  background: rgba(10, 15, 30, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-cyan {
+  background: rgba(6, 18, 38, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.glass-panel-indigo {
+  background: rgba(15, 16, 40, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+/* Neon border pulses */
+@keyframes neon-border {
+  0%, 100% { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
+  50% { border-color: rgba(99, 102, 241, 0.6); box-shadow: 0 0 22px rgba(99, 102, 241, 0.35); }
+}
+
+.animate-neon-border {
+  animation: neon-border 6s ease-in-out infinite;
+}
+
+/* Markdown prose enhancements */
+.markdown-body p {
+  margin-bottom: 0.75rem;
+  line-height: 1.65;
+}
+
+.markdown-body strong {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.markdown-body ul, .markdown-body ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-body code {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: #a5f3fc;
+}

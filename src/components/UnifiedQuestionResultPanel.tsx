@@ -1,0 +1,723 @@
+import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { 
+  Send, 
+  ChevronDown, 
+  ChevronUp, 
+  CheckCircle2, 
+  AlertTriangle, 
+  AlertCircle, 
+  XCircle, 
+  Search, 
+  Database, 
+  FileDown, 
+  Cpu, 
+  Crosshair, 
+  ShieldCheck,
+  Compass,
+  FileText,
+  Layers
+} from 'lucide-react';
+import { AgentResponse, UploadedImage } from '../types';
+
+interface UnifiedQuestionResultPanelProps {
+  inputQuery: string;
+  onChangeQuery: (query: string) => void;
+  onSubmitQuery: () => void;
+  isLoading: boolean;
+  images: UploadedImage[];
+  latestResponse?: AgentResponse;
+  onDownloadReport: () => void;
+}
+
+export function UnifiedQuestionResultPanel({
+  inputQuery,
+  onChangeQuery,
+  onSubmitQuery,
+  isLoading,
+  images,
+  latestResponse,
+  onDownloadReport
+}: UnifiedQuestionResultPanelProps) {
+  const [showAnalysisDetails, setShowAnalysisDetails] = useState(false);
+  
+  // EO Search state for automatic/one-click missing evidence search
+  const [isSearchingEo, setIsSearchingEo] = useState(false);
+  const [eoSearchResults, setEoSearchResults] = useState<any[] | null>(null);
+  const [eoSearchError, setEoSearchError] = useState<string | null>(null);
+
+  // Dynamic suggestion questions based on current input configuration
+  const dynamicSuggestions = React.useMemo(() => {
+    const hasSar = images.some(i => i.slot === 'sar' || i.metadata?.modality === 'SAR');
+    const isTemporal = images.length === 2 && (images.some(i => i.slot === 'before') || images.some(i => i.slot === 'after'));
+    const isCrossModal = images.length === 2 && hasSar && images.some(i => i.slot === 'optical' || i.metadata?.modality === 'OPTICAL');
+
+    if (isCrossModal) {
+      return [
+        "Compare optical observation with SAR radar backscatter.",
+        "Verify if visual features correspond to permanent physical structures.",
+        "Check for cross-modal agreement or sensor conflict."
+      ];
+    }
+
+    if (isTemporal) {
+      return [
+        "Did built-up area increase between these observations?",
+        "Identify candidate physical change regions and ground them.",
+        "Did the water extent change between these dates?"
+      ];
+    }
+
+    if (hasSar) {
+      return [
+        "Evaluate radar backscatter intensity and structural permanence.",
+        "Assess smooth specular surfaces vs rough double-bounce returns.",
+        "Identify potential metallic or vertical built structures."
+      ];
+    }
+
+    if (images.length === 1) {
+      return [
+        "What is visible in this imagery?",
+        "Where is the built-up area?",
+        "Describe dominant land cover classes in this scene."
+      ];
+    }
+
+    return [
+      "What is visible in this imagery?",
+      "Where is the built-up area?",
+      "Did the water extent change?"
+    ];
+  }, [images]);
+
+  // Extract strict Decision Status
+  const getDecisionStatus = (contractDecision?: string) => {
+    const raw = (contractDecision || '').toUpperCase();
+    if (raw === 'VERIFIED') {
+      return {
+        label: 'VERIFIED',
+        textColor: 'text-emerald-400',
+        borderColor: 'border-emerald-500/30',
+        bgColor: 'bg-emerald-950/30',
+        icon: <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />,
+        description: 'Required evidence exists, is valid, and no material contradiction remains.'
+      };
+    }
+    if (raw.includes('CONFLICT')) {
+      return {
+        label: 'EVIDENCE CONFLICT',
+        textColor: 'text-rose-400',
+        borderColor: 'border-rose-500/30',
+        bgColor: 'bg-rose-950/30',
+        icon: <XCircle size={16} className="text-rose-400 shrink-0" />,
+        description: 'Valid evidence sources or sensor modalities materially disagree.'
+      };
+    }
+    if (raw.includes('NEEDS_MORE') || raw.includes('MORE_DATA')) {
+      return {
+        label: 'NEEDS MORE DATA',
+        textColor: 'text-sky-400',
+        borderColor: 'border-sky-500/30',
+        bgColor: 'bg-sky-950/30',
+        icon: <AlertCircle size={16} className="text-sky-400 shrink-0" />,
+        description: 'The system identified missing evidence required to answer reliably without guessing.'
+      };
+    }
+    return {
+      label: 'INCONCLUSIVE',
+      textColor: 'text-amber-400',
+      borderColor: 'border-amber-500/30',
+      bgColor: 'bg-amber-950/30',
+      icon: <AlertTriangle size={16} className="text-amber-400 shrink-0" />,
+      description: 'Available evidence is insufficient to establish the requested claim.'
+    };
+  };
+
+  const decision = getDecisionStatus(latestResponse?.contract?.finalDecision);
+
+  // Search Bhoonidhi / MOSDAC catalogue for missing observation
+  const handleDiscoverEoData = async () => {
+    if (isSearchingEo) return;
+    setIsSearchingEo(true);
+    setEoSearchError(null);
+    try {
+      const res = await fetch('/api/eo/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: latestResponse?.contract?.query || 'Multimodal remote sensing satellite imagery',
+          modality: latestResponse?.recommendedModality || 'OPTICAL'
+        })
+      });
+      if (!res.ok) throw new Error(`Discovery failed with status ${res.status}`);
+      const data = await res.json();
+      setEoSearchResults(data.candidates || data.observations || []);
+    } catch (err: any) {
+      setEoSearchError(err.message || 'Unable to connect to EO catalogue service.');
+    } finally {
+      setIsSearchingEo(false);
+    }
+  };
+
+  // Tripartite Separation data
+  const observedAndMeasured = latestResponse?.contract?.observedAndMeasured?.length
+    ? latestResponse.contract.observedAndMeasured
+    : (latestResponse?.contract?.observations?.length
+        ? latestResponse.contract.observations
+        : latestResponse?.evidence?.observations || []);
+
+  const inferred = latestResponse?.contract?.inferred?.length
+    ? latestResponse.contract.inferred
+    : (latestResponse?.evidence?.interpretations?.length
+        ? latestResponse.evidence.interpretations
+        : []);
+
+  const notEstablished = latestResponse?.contract?.notEstablished?.length
+    ? latestResponse.contract.notEstablished
+    : (latestResponse?.contract?.limitations?.length
+        ? latestResponse.contract.limitations
+        : ['Ground-truth confirmation without in-situ ground sensors cannot be established.']);
+
+  const multiImageComparison = latestResponse?.contract?.multiImageComparison || (latestResponse as any)?.multiImageComparison;
+
+  const evidenceUsed = React.useMemo(() => {
+    const list: string[] = [];
+    if (images.length === 1) {
+      list.push(`Input observation: ${images[0].metadata?.fileName || 'Primary satellite raster'}`);
+    } else if (images.length > 1) {
+      images.forEach((img, idx) => {
+        list.push(`Input observation ${idx + 1}: ${img.metadata?.fileName || `Image ${idx + 1}`}`);
+      });
+    }
+    if (latestResponse?.contract?.confoundersChecked?.length) {
+      list.push(`Evaluated confounders: ${latestResponse.contract.confoundersChecked.join(', ')}`);
+    }
+    if (latestResponse?.contract?.requiredEvidence?.length) {
+      latestResponse.contract.requiredEvidence.slice(0, 2).forEach(re => list.push(re));
+    }
+    return list;
+  }, [images, latestResponse]);
+
+  const contradictions = latestResponse?.evidence?.contradictingEvidence || [];
+  const limitations = latestResponse?.confidence?.limitations || latestResponse?.contract?.limitations || [];
+
+  return (
+    <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden select-none">
+      
+      {/* 1. TOP QUESTION AREA */}
+      <div className="p-3.5 border-b border-slate-800 bg-slate-900/90 shrink-0">
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-xs font-semibold text-slate-200">
+            Question
+          </label>
+          <span className="text-[11px] text-slate-500 font-mono">
+            {images.length > 0 ? `${images.length} observation${images.length > 1 ? 's' : ''}` : 'No imagery loaded'}
+          </span>
+        </div>
+
+        {/* Question Input Box */}
+        <div className="relative">
+          <textarea
+            value={inputQuery}
+            onChange={(e) => onChangeQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onSubmitQuery();
+              }
+            }}
+            placeholder="What would you like to determine from this imagery?"
+            rows={2}
+            className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-lg p-2.5 text-xs text-slate-100 placeholder:text-slate-500 outline-none resize-none transition-colors"
+          />
+        </div>
+
+        {/* Suggested Prompt Chips */}
+        <div className="mt-2">
+          <div className="flex flex-wrap gap-1.5">
+            {dynamicSuggestions.map((suggestion, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => onChangeQuery(suggestion)}
+                className="text-left text-[11px] text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-750 px-2 py-0.5 rounded transition-colors cursor-pointer"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Primary Action Button */}
+        <div className="mt-3 flex justify-end">
+          <button
+            type="button"
+            onClick={onSubmitQuery}
+            disabled={isLoading || (!inputQuery.trim() && images.length === 0)}
+            className="w-full sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Analyzing Evidence...</span>
+              </>
+            ) : (
+              <>
+                <Send size={13} />
+                <span>ANALYZE EVIDENCE</span>
+              </>
+            )}
+          </button>
+        </div>
+
+      </div>
+
+      {/* 2. RESULTS & EVIDENCE AREA */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+        {isLoading ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold text-slate-200">
+                Evaluating Remote-Sensing Evidence
+              </h3>
+              <p className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
+                Extracting pixel statistics, verifying spectral/backscatter indicators, and enforcing decision gate...
+              </p>
+            </div>
+          </div>
+        ) : !latestResponse ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
+            <Compass size={28} className="opacity-30" />
+            <h3 className="text-xs font-medium text-slate-300">Awaiting Analysis</h3>
+            <p className="text-[11px] text-slate-500 max-w-xs leading-relaxed">
+              Upload imagery and ask a question. SatQuery AI automatically verifies measurable evidence and answers only when justified.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            
+            {/* A. DECISION GATE (PRIMARY STATUS) */}
+            <div className={`p-3.5 rounded-xl border ${decision.borderColor} ${decision.bgColor}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
+                  Decision
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {decision.icon}
+                  <span className={`text-xs font-bold uppercase tracking-wider ${decision.textColor}`}>
+                    {decision.label}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-snug">
+                {decision.description}
+              </p>
+            </div>
+
+            {/* B. PRIMARY ANSWER */}
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider">
+                  Answer
+                </span>
+              </div>
+              <div className="prose prose-sm prose-invert max-w-none text-slate-100 text-xs leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {latestResponse.answer}
+                </ReactMarkdown>
+              </div>
+            </div>
+
+            {/* MULTI-IMAGE COMPARATIVE ANALYSIS */}
+            {multiImageComparison && (
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-indigo-900/50 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                  <span className="text-[10px] font-mono font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers size={13} className="text-indigo-400" />
+                    Comparative Analysis
+                  </span>
+                  <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950 px-2 py-0.5 rounded border border-indigo-900/60">
+                    {multiImageComparison.relationshipLabel}
+                  </span>
+                </div>
+
+                {multiImageComparison.summary && (
+                  <p className="text-xs text-slate-300 leading-snug">
+                    {multiImageComparison.summary}
+                  </p>
+                )}
+
+                <div className="space-y-2 pt-1">
+                  {/* What Changed / Differs */}
+                  {multiImageComparison.whatChangedOrDiffers && multiImageComparison.whatChangedOrDiffers.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                        What Changed / Differs
+                      </span>
+                      <ul className="text-xs text-slate-300 space-y-1 pl-3.5 list-disc marker:text-cyan-400">
+                        {multiImageComparison.whatChangedOrDiffers.map((item: string, idx: number) => (
+                          <li key={idx} className="leading-snug">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* What Stayed the Same */}
+                  {multiImageComparison.whatStayedSame && multiImageComparison.whatStayedSame.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        What Stayed the Same
+                      </span>
+                      <ul className="text-xs text-slate-300 space-y-1 pl-3.5 list-disc marker:text-emerald-400">
+                        {multiImageComparison.whatStayedSame.map((item: string, idx: number) => (
+                          <li key={idx} className="leading-snug">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* What Cannot Be Compared */}
+                  {multiImageComparison.whatCannotBeCompared && multiImageComparison.whatCannotBeCompared.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        Incomparable Differences (Sensor, Angle, or Resolution)
+                      </span>
+                      <ul className="text-xs text-slate-400 space-y-1 pl-3.5 list-disc marker:text-amber-400">
+                        {multiImageComparison.whatCannotBeCompared.map((item: string, idx: number) => (
+                          <li key={idx} className="leading-snug">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* C. WHAT THE DATA SHOWS */}
+            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+                <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-emerald-400" />
+                  What the Data Shows
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">Observed &amp; Measured</span>
+              </div>
+              <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc marker:text-emerald-400">
+                {observedAndMeasured.slice(0, 4).map((obs: any, idx: number) => (
+                  <li key={idx} className="leading-snug">
+                    {typeof obs === 'string' ? obs : obs.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* C2. WHAT THE EVIDENCE SUGGESTS (INFERRED) */}
+            {inferred.length > 0 && (
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+                  <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Compass size={13} className="text-sky-400" />
+                    What the Evidence Suggests
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">Inferred / Estimated</span>
+                </div>
+                <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc marker:text-sky-400">
+                  {inferred.slice(0, 4).map((inf: any, idx: number) => (
+                    <li key={idx} className="leading-snug">
+                      {typeof inf === 'string' ? inf : inf.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* D. WHAT THE DATA DOES NOT ESTABLISH */}
+            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+                <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertTriangle size={13} className="text-amber-400" />
+                  What the Data Does Not Establish
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">Unverified Boundary</span>
+              </div>
+              <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc marker:text-amber-400">
+                {notEstablished.slice(0, 3).map((notEst: string, idx: number) => (
+                  <li key={idx} className="leading-snug">{notEst}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* E. EVIDENCE USED & CONTRADICTION CHECK */}
+            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+                <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider">
+                  Evidence
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">Grounded Inputs</span>
+              </div>
+              <ul className="text-xs text-slate-300 space-y-1 pl-4 list-disc marker:text-blue-400">
+                {evidenceUsed.map((ev, idx) => (
+                  <li key={idx} className="leading-snug">{ev}</li>
+                ))}
+              </ul>
+
+              <div className="pt-2 border-t border-slate-900">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400 font-medium">Contradictions Detected:</span>
+                  <span className={`text-[11px] font-semibold ${contradictions.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {contradictions.length > 0 ? `${contradictions.length} conflict(s)` : 'None detected'}
+                  </span>
+                </div>
+                {contradictions.length > 0 && (
+                  <ul className="text-xs text-rose-300/90 space-y-1 pl-4 list-disc marker:text-rose-500 mt-1">
+                    {contradictions.map((con: string, idx: number) => (
+                      <li key={idx} className="leading-snug">{con}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* F. LIMITATIONS */}
+            {limitations.length > 0 && (
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider block">
+                  Limitations
+                </span>
+                <ul className="text-xs text-slate-400 space-y-1 pl-4 list-disc marker:text-slate-600">
+                  {limitations.slice(0, 3).map((lim: string, idx: number) => (
+                    <li key={idx} className="leading-snug">{lim}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* G. AUTOMATIC SEARCH FOR MISSING EVIDENCE (When NEEDS MORE DATA or INCONCLUSIVE) */}
+            {(decision.label === 'NEEDS MORE DATA' || decision.label === 'INCONCLUSIVE' || latestResponse.contract?.whyNotVerified) && (
+              <div className="bg-slate-950 border border-blue-900/40 p-3.5 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                  <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Database size={13} />
+                    Missing Evidence &amp; Acquisition
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    ISRO Bhoonidhi / MOSDAC
+                  </span>
+                </div>
+
+                {latestResponse.contract?.whyNotVerified && (
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-0.5">Why not verified:</span>
+                    <p className="text-xs text-slate-200 leading-snug">{latestResponse.contract.whyNotVerified}</p>
+                  </div>
+                )}
+
+                {latestResponse.contract?.requiredObservation && (
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-0.5">Required observation:</span>
+                    <p className="text-xs text-blue-300 leading-snug">{latestResponse.contract.requiredObservation}</p>
+                  </div>
+                )}
+
+                {/* Single Search Button */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDiscoverEoData}
+                    disabled={isSearchingEo}
+                    className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer shadow disabled:opacity-50"
+                  >
+                    {isSearchingEo ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Searching Available Earth-Observation Data...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search size={14} />
+                        <span>Search Available Earth-Observation Data</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {eoSearchError && (
+                  <p className="text-[11px] text-rose-400">{eoSearchError}</p>
+                )}
+
+                {/* Discovered Real Satellite Observations */}
+                {eoSearchResults && eoSearchResults.length > 0 && (
+                  <div className="mt-2 space-y-2 bg-slate-900/90 p-3 rounded-lg border border-slate-800">
+                    <span className="text-[10px] font-mono font-semibold text-emerald-400 uppercase tracking-wider block">
+                      ✓ Suitable Earth-Observation Data Found ({eoSearchResults.length})
+                    </span>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {eoSearchResults.map((obs: any, oIdx: number) => (
+                        <div key={oIdx} className="bg-slate-950 p-2.5 rounded border border-slate-800 text-xs space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-100">
+                              Source: {obs.source || 'Bhoonidhi'}
+                            </span>
+                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-900">
+                              {obs.access?.toUpperCase() || 'OPEN'}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-400">
+                            <div><span className="text-slate-500">Satellite:</span> {obs.satellite}</div>
+                            <div><span className="text-slate-500">Sensor:</span> {obs.sensor}</div>
+                            <div><span className="text-slate-500">Acquisition:</span> {obs.acquisitionTime?.slice(0, 10) || 'Recent'}</div>
+                            <div><span className="text-slate-500">Resolution:</span> {obs.resolution}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* H. EXPANDABLE TECHNICAL ANALYSIS DETAILS */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowAnalysisDetails(!showAnalysisDetails)}
+                className="w-full py-2 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-blue-400" />
+                  <span className="font-semibold">View analysis details</span>
+                </div>
+                {showAnalysisDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              {showAnalysisDetails && (
+                <div className="mt-2 p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-xs">
+                  
+                  {/* Selected Tools & Remote Sensing Modules */}
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                      Deterministic Tools &amp; Engines Executed
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(latestResponse.audit?.toolsUsed?.length ? latestResponse.audit.toolsUsed : ['DeterministicEngine', 'RemoteSensingEvidenceEngine']).map((tool, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-300">
+                          {tool}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI Provider & Model */}
+                  <div className="flex items-center justify-between text-xs bg-slate-900/60 p-2 rounded border border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Cpu size={14} className="text-blue-400" />
+                      <span className="text-slate-300 font-medium">Provider &amp; Model</span>
+                    </div>
+                    <span className="font-mono text-blue-300 font-semibold">
+                      {latestResponse.provider || 'Gemini'} ({latestResponse.model || 'Flash'})
+                    </span>
+                  </div>
+
+                  {/* Data Quality & CRS */}
+                  <div className="flex items-center justify-between text-xs bg-slate-900/60 p-2 rounded border border-slate-800">
+                    <span className="text-slate-400">Data Quality:</span>
+                    <span className="font-mono text-slate-200">
+                      {images.some(i => i.metadata?.epsg || i.metadata?.crs)
+                        ? 'Calibrated Spatial CRS'
+                        : 'Pixel Coordinate Space'}
+                    </span>
+                  </div>
+
+                  {/* Model Confidence with Strict Disclaimer */}
+                  <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Model Confidence:</span>
+                      <span className="text-cyan-400 font-mono font-bold">
+                        {latestResponse.contract?.modelConfidence || latestResponse.confidence?.level || 'MEDIUM'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 italic">
+                      Model confidence — not evidence of truth. Does not determine the verified state.
+                    </p>
+                  </div>
+
+                  {/* Grounding Bounding Box Coordinates */}
+                  {latestResponse.groundingBoxes && latestResponse.groundingBoxes.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-1">
+                        <span className="text-[10px] font-mono font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                          <Crosshair size={12} /> Grounding Coordinates ({latestResponse.groundingBoxes.length})
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-500">0-1000 Normalized</span>
+                      </div>
+                      <div className="space-y-1">
+                        {latestResponse.groundingBoxes.map((box, bIdx) => (
+                          <div 
+                            key={bIdx}
+                            className="flex items-center justify-between bg-slate-900/80 p-1.5 rounded border border-slate-800 text-[11px] font-mono"
+                          >
+                            <span className="text-slate-200 truncate">{box.label}</span>
+                            <span className="text-emerald-400 text-[10px] ml-2 shrink-0">
+                              [{Math.round(box.ymin)}, {Math.round(box.xmin)}, {Math.round(box.ymax)}, {Math.round(box.xmax)}]
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Complete Execution Trace */}
+                  {latestResponse.executionTrace && latestResponse.executionTrace.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider block">
+                        Execution Trace ({latestResponse.executionTrace.length} steps)
+                      </span>
+                      <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                        {latestResponse.executionTrace.map((tr, tIdx) => (
+                          <div key={tIdx} className="bg-slate-900/60 p-1.5 rounded border border-slate-800 text-[10px] font-mono flex items-start gap-1.5">
+                            <span className={`px-1 py-0.2 rounded shrink-0 ${
+                              tr.status === 'SUCCESS' ? 'text-emerald-400 bg-emerald-950/60' :
+                              tr.status === 'WARNING' ? 'text-amber-400 bg-amber-950/60' :
+                              tr.status === 'ERROR' ? 'text-rose-400 bg-rose-950/60' : 'text-slate-400 bg-slate-800'
+                            }`}>
+                              {tr.status}
+                            </span>
+                            <div className="truncate">
+                              <span className="text-slate-300 font-semibold">{tr.step}:</span>{' '}
+                              <span className="text-slate-400">{tr.details || ''}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Download Auditable Report */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={onDownloadReport}
+                      className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-850 text-slate-200 font-medium text-xs rounded-lg border border-slate-750 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <FileDown size={14} className="text-blue-400" />
+                      <span>Download Auditable Analysis Report (.md)</span>
+                    </button>
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}

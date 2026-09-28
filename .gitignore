@@ -1,0 +1,18 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Training datasets
+*.lmdb
+*.parquet
+*.h5
+training/runs/
+training/data/
+*.safetensors
+*.bin
+*.pt
