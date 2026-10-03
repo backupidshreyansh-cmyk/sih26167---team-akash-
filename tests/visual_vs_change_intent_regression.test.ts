@@ -56,7 +56,8 @@ function makeImage(id: string, role: 'PRIMARY' | 'BEFORE' | 'AFTER' = 'PRIMARY',
       epsg: 32643,
       bounds: [100, 200, 300, 400],
       pixelSize: [10, 10],
-      geotransform: [100, 10, 0, 400, 0, -10]
+      geotransform: [100, 10, 0, 400, 0, -10],
+      metadataTags: {}
     } : null, // intentionally missing georeferencing
     sourceBase64: TEST_PNG_BASE64
   };

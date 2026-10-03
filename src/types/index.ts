@@ -9,6 +9,7 @@ export interface AnalysisContract {
   observations: string[];
   observedAndMeasured?: string[];
   inferred?: string[];
+  verified?: string[];
   notEstablished?: string[];
   initialHypothesis: string;
   supportingEvidence: string[];
@@ -19,6 +20,9 @@ export interface AnalysisContract {
   evidenceSufficiency: EvidenceSufficiency;
   finalDecision: FinalDecision;
   whyNotVerified?: string;
+  why?: string;
+  whatDataIsRequired?: string;
+  whatTheUserShouldUpload?: string;
   requiredObservation?: string;
   recommendedAction?: string;
   answer: string;

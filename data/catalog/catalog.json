@@ -1,0 +1,603 @@
+{
+  "version": "1.0.0-phase1-archive",
+  "lastUpdated": "2026-10-03T17:17:01.227Z",
+  "totalScenes": 6,
+  "scenes": {
+    "msi_20220315_cc08cce3db": {
+      "sceneId": "msi_20220315_cc08cce3db",
+      "fileName": "amaravati_krishna_river_s2_20220315.png",
+      "fileHash": "cc08cce3db40124dea197f068d54312ee726094a0d515bf314ca6914421e4bb4",
+      "format": "PNG",
+      "fileSizeBytes": 1333,
+      "width": 128,
+      "height": 128,
+      "bandCount": 4,
+      "bands": [
+        {
+          "index": 1,
+          "name": "Red",
+          "dataType": "uint8"
+        },
+        {
+          "index": 2,
+          "name": "Green",
+          "dataType": "uint8"
+        },
+        {
+          "index": 3,
+          "name": "Blue",
+          "dataType": "uint8"
+        }
+      ],
+      "crs": "unavailable",
+      "epsg": null,
+      "transform": null,
+      "bounds": null,
+      "resolution": null,
+      "acquisitionDate": "2022-03-15T05:30:00Z",
+      "sensor": "MSI",
+      "satellite": "UNKNOWN",
+      "modality": "optical",
+      "source": "ISRO / ESA Sentinel-2 MSI Multi-Spectral Archive",
+      "quality": {
+        "fileReadable": true,
+        "formatSupported": true,
+        "metadataCompletenessScore": 50,
+        "georeferencingStatus": "UNAVAILABLE",
+        "dimensionsValid": true,
+        "numericalValuesValid": true,
+        "nodataValue": null,
+        "nodataPercentage": null,
+        "usablePixelPercentage": 100,
+        "cloudCoverStatus": "NOT CHECKED",
+        "cloudCoverPercentage": null,
+        "warnings": [
+          "MISSING_GEOREFERENCE: Standard consumer raster format without embedded georeferencing tags."
+        ]
+      },
+      "provenance": {
+        "sceneId": "msi_20220315_cc08cce3db",
+        "fileHash": "cc08cce3db40124dea197f068d54312ee726094a0d515bf314ca6914421e4bb4",
+        "sourceFileName": "amaravati_krishna_river_s2_20220315.png",
+        "ingestionTimestamp": "2026-10-03T17:16:40.845Z",
+        "pipelineVersion": "1.0.0-phase1-archive",
+        "fileSizeBytes": 1333,
+        "steps": [
+          {
+            "step": "INGESTION_RECEIVED",
+            "timestamp": "2026-10-03T17:16:40.845Z",
+            "status": "SUCCESS",
+            "details": "File received: amaravati_krishna_river_s2_20220315.png (1333 bytes, SHA-256: cc08cce3db40...)"
+          },
+          {
+            "step": "METADATA_EXTRACTION",
+            "timestamp": "2026-10-03T17:16:40.847Z",
+            "status": "SUCCESS",
+            "details": "Consumer raster parsed: 128x128, 4 bands. Georeferencing marked unavailable."
+          },
+          {
+            "step": "FILE_ARCHIVED",
+            "timestamp": "2026-10-03T17:16:40.847Z",
+            "status": "SUCCESS",
+            "details": "Saved copy to data/imagery/msi_20220315_cc08cce3db_amaravati_krishna_river_s2_20220315.png"
+          },
+          {
+            "step": "THUMBNAIL_GENERATION",
+            "timestamp": "2026-10-03T17:16:40.958Z",
+            "status": "SUCCESS",
+            "details": "Thumbnail generated: data/thumbnails/msi_20220315_cc08cce3db_thumb.png"
+          },
+          {
+            "step": "QUALITY_ASSESSMENT",
+            "timestamp": "2026-10-03T17:16:40.958Z",
+            "status": "SUCCESS",
+            "details": "Completeness: 50%, Georeferencing: UNAVAILABLE"
+          }
+        ]
+      },
+      "thumbnailPath": "/app/applet/data/thumbnails/msi_20220315_cc08cce3db_thumb.png",
+      "storedFilePath": "/app/applet/data/imagery/msi_20220315_cc08cce3db_amaravati_krishna_river_s2_20220315.png",
+      "ingestedAt": "2026-10-03T17:16:40.845Z",
+      "processingVersion": "1.0.0-phase1-archive",
+      "status": "READY"
+    },
+    "msi_20240315_0f6ea7903c": {
+      "sceneId": "msi_20240315_0f6ea7903c",
+      "fileName": "amaravati_krishna_river_s2_20240315.png",
+      "fileHash": "0f6ea7903cc8154ab62c581bf2c52c3fc757063abd2d924ea84f2797e1363f8f",
+      "format": "PNG",
+      "fileSizeBytes": 1438,
+      "width": 128,
+      "height": 128,
+      "bandCount": 4,
+      "bands": [
+        {
+          "index": 1,
+          "name": "Red",
+          "dataType": "uint8"
+        },
+        {
+          "index": 2,
+          "name": "Green",
+          "dataType": "uint8"
+        },
+        {
+          "index": 3,
+          "name": "Blue",
+          "dataType": "uint8"
+        }
+      ],
+      "crs": "unavailable",
+      "epsg": null,
+      "transform": null,
+      "bounds": null,
+      "resolution": null,
+      "acquisitionDate": "2024-03-15T05:30:00Z",
+      "sensor": "MSI",
+      "satellite": "UNKNOWN",
+      "modality": "optical",
+      "source": "ISRO / ESA Sentinel-2 MSI Multi-Spectral Archive",
+      "quality": {
+        "fileReadable": true,
+        "formatSupported": true,
+        "metadataCompletenessScore": 50,
+        "georeferencingStatus": "UNAVAILABLE",
+        "dimensionsValid": true,
+        "numericalValuesValid": true,
+        "nodataValue": null,
+        "nodataPercentage": null,
+        "usablePixelPercentage": 100,
+        "cloudCoverStatus": "NOT CHECKED",
+        "cloudCoverPercentage": null,
+        "warnings": [
+          "MISSING_GEOREFERENCE: Standard consumer raster format without embedded georeferencing tags."
+        ]
+      },
+      "provenance": {
+        "sceneId": "msi_20240315_0f6ea7903c",
+        "fileHash": "0f6ea7903cc8154ab62c581bf2c52c3fc757063abd2d924ea84f2797e1363f8f",
+        "sourceFileName": "amaravati_krishna_river_s2_20240315.png",
+        "ingestionTimestamp": "2026-10-03T17:16:40.994Z",
+        "pipelineVersion": "1.0.0-phase1-archive",
+        "fileSizeBytes": 1438,
+        "steps": [
+          {
+            "step": "INGESTION_RECEIVED",
+            "timestamp": "2026-10-03T17:16:40.994Z",
+            "status": "SUCCESS",
+            "details": "File received: amaravati_krishna_river_s2_20240315.png (1438 bytes, SHA-256: 0f6ea7903cc8...)"
+          },
+          {
+            "step": "METADATA_EXTRACTION",
+            "timestamp": "2026-10-03T17:16:40.995Z",
+            "status": "SUCCESS",
+            "details": "Consumer raster parsed: 128x128, 4 bands. Georeferencing marked unavailable."
+          },
+          {
+            "step": "FILE_ARCHIVED",
+            "timestamp": "2026-10-03T17:16:40.995Z",
+            "status": "SUCCESS",
+            "details": "Saved copy to data/imagery/msi_20240315_0f6ea7903c_amaravati_krishna_river_s2_20240315.png"
+          },
+          {
+            "step": "THUMBNAIL_GENERATION",
+            "timestamp": "2026-10-03T17:16:41.014Z",
+            "status": "SUCCESS",
+            "details": "Thumbnail generated: data/thumbnails/msi_20240315_0f6ea7903c_thumb.png"
+          },
+          {
+            "step": "QUALITY_ASSESSMENT",
+            "timestamp": "2026-10-03T17:16:41.014Z",
+            "status": "SUCCESS",
+            "details": "Completeness: 50%, Georeferencing: UNAVAILABLE"
+          }
+        ]
+      },
+      "thumbnailPath": "/app/applet/data/thumbnails/msi_20240315_0f6ea7903c_thumb.png",
+      "storedFilePath": "/app/applet/data/imagery/msi_20240315_0f6ea7903c_amaravati_krishna_river_s2_20240315.png",
+      "ingestedAt": "2026-10-03T17:16:40.994Z",
+      "processingVersion": "1.0.0-phase1-archive",
+      "status": "READY"
+    },
+    "liss4_20230510_42ef41f4c0": {
+      "sceneId": "liss4_20230510_42ef41f4c0",
+      "fileName": "mumbai_port_coastal_liss4_20230510.png",
+      "fileHash": "42ef41f4c0564a5031669e306755223ffdef98be3f9f676b6fb8d980b9563fb5",
+      "format": "PNG",
+      "fileSizeBytes": 428,
+      "width": 128,
+      "height": 128,
+      "bandCount": 4,
+      "bands": [
+        {
+          "index": 1,
+          "name": "Red",
+          "dataType": "uint8"
+        },
+        {
+          "index": 2,
+          "name": "Green",
+          "dataType": "uint8"
+        },
+        {
+          "index": 3,
+          "name": "Blue",
+          "dataType": "uint8"
+        }
+      ],
+      "crs": "unavailable",
+      "epsg": null,
+      "transform": null,
+      "bounds": null,
+      "resolution": null,
+      "acquisitionDate": "2023-05-10T04:45:00Z",
+      "sensor": "LISS-4",
+      "satellite": "UNKNOWN",
+      "modality": "optical",
+      "source": "ISRO Resourcesat-2 LISS-4 High Resolution Imagery",
+      "quality": {
+        "fileReadable": true,
+        "formatSupported": true,
+        "metadataCompletenessScore": 50,
+        "georeferencingStatus": "UNAVAILABLE",
+        "dimensionsValid": true,
+        "numericalValuesValid": true,
+        "nodataValue": null,
+        "nodataPercentage": null,
+        "usablePixelPercentage": 100,
+        "cloudCoverStatus": "NOT CHECKED",
+        "cloudCoverPercentage": null,
+        "warnings": [
+          "MISSING_GEOREFERENCE: Standard consumer raster format without embedded georeferencing tags."
+        ]
+      },
+      "provenance": {
+        "sceneId": "liss4_20230510_42ef41f4c0",
+        "fileHash": "42ef41f4c0564a5031669e306755223ffdef98be3f9f676b6fb8d980b9563fb5",
+        "sourceFileName": "mumbai_port_coastal_liss4_20230510.png",
+        "ingestionTimestamp": "2026-10-03T17:16:41.031Z",
+        "pipelineVersion": "1.0.0-phase1-archive",
+        "fileSizeBytes": 428,
+        "steps": [
+          {
+            "step": "INGESTION_RECEIVED",
+            "timestamp": "2026-10-03T17:16:41.031Z",
+            "status": "SUCCESS",
+            "details": "File received: mumbai_port_coastal_liss4_20230510.png (428 bytes, SHA-256: 42ef41f4c056...)"
+          },
+          {
+            "step": "METADATA_EXTRACTION",
+            "timestamp": "2026-10-03T17:16:41.031Z",
+            "status": "SUCCESS",
+            "details": "Consumer raster parsed: 128x128, 4 bands. Georeferencing marked unavailable."
+          },
+          {
+            "step": "FILE_ARCHIVED",
+            "timestamp": "2026-10-03T17:16:41.032Z",
+            "status": "SUCCESS",
+            "details": "Saved copy to data/imagery/liss4_20230510_42ef41f4c0_mumbai_port_coastal_liss4_20230510.png"
+          },
+          {
+            "step": "THUMBNAIL_GENERATION",
+            "timestamp": "2026-10-03T17:16:41.049Z",
+            "status": "SUCCESS",
+            "details": "Thumbnail generated: data/thumbnails/liss4_20230510_42ef41f4c0_thumb.png"
+          },
+          {
+            "step": "QUALITY_ASSESSMENT",
+            "timestamp": "2026-10-03T17:16:41.049Z",
+            "status": "SUCCESS",
+            "details": "Completeness: 50%, Georeferencing: UNAVAILABLE"
+          }
+        ]
+      },
+      "thumbnailPath": "/app/applet/data/thumbnails/liss4_20230510_42ef41f4c0_thumb.png",
+      "storedFilePath": "/app/applet/data/imagery/liss4_20230510_42ef41f4c0_mumbai_port_coastal_liss4_20230510.png",
+      "ingestedAt": "2026-10-03T17:16:41.031Z",
+      "processingVersion": "1.0.0-phase1-archive",
+      "status": "READY"
+    },
+    "csar_20230820_87b19db238": {
+      "sceneId": "csar_20230820_87b19db238",
+      "fileName": "pokhran_rajasthan_csar_20230820.png",
+      "fileHash": "87b19db238b1bb04ce6c2f5594f6f110e659a095e51a8bb8f694f2fb8fb213fc",
+      "format": "PNG",
+      "fileSizeBytes": 15186,
+      "width": 128,
+      "height": 128,
+      "bandCount": 4,
+      "bands": [
+        {
+          "index": 1,
+          "name": "Red",
+          "dataType": "uint8"
+        },
+        {
+          "index": 2,
+          "name": "Green",
+          "dataType": "uint8"
+        },
+        {
+          "index": 3,
+          "name": "Blue",
+          "dataType": "uint8"
+        }
+      ],
+      "crs": "unavailable",
+      "epsg": null,
+      "transform": null,
+      "bounds": null,
+      "resolution": null,
+      "acquisitionDate": "2023-08-20T01:15:00Z",
+      "sensor": "C-SAR",
+      "satellite": "UNKNOWN",
+      "modality": "optical",
+      "source": "ISRO EOS-04 / RISAT-1A Synthetic Aperture Radar",
+      "quality": {
+        "fileReadable": true,
+        "formatSupported": true,
+        "metadataCompletenessScore": 50,
+        "georeferencingStatus": "UNAVAILABLE",
+        "dimensionsValid": true,
+        "numericalValuesValid": true,
+        "nodataValue": null,
+        "nodataPercentage": null,
+        "usablePixelPercentage": 100,
+        "cloudCoverStatus": "NOT CHECKED",
+        "cloudCoverPercentage": null,
+        "warnings": [
+          "MISSING_GEOREFERENCE: Standard consumer raster format without embedded georeferencing tags."
+        ]
+      },
+      "provenance": {
+        "sceneId": "csar_20230820_87b19db238",
+        "fileHash": "87b19db238b1bb04ce6c2f5594f6f110e659a095e51a8bb8f694f2fb8fb213fc",
+        "sourceFileName": "pokhran_rajasthan_csar_20230820.png",
+        "ingestionTimestamp": "2026-10-03T17:16:41.072Z",
+        "pipelineVersion": "1.0.0-phase1-archive",
+        "fileSizeBytes": 15186,
+        "steps": [
+          {
+            "step": "INGESTION_RECEIVED",
+            "timestamp": "2026-10-03T17:16:41.072Z",
+            "status": "SUCCESS",
+            "details": "File received: pokhran_rajasthan_csar_20230820.png (15186 bytes, SHA-256: 87b19db238b1...)"
+          },
+          {
+            "step": "METADATA_EXTRACTION",
+            "timestamp": "2026-10-03T17:16:41.072Z",
+            "status": "SUCCESS",
+            "details": "Consumer raster parsed: 128x128, 4 bands. Georeferencing marked unavailable."
+          },
+          {
+            "step": "FILE_ARCHIVED",
+            "timestamp": "2026-10-03T17:16:41.073Z",
+            "status": "SUCCESS",
+            "details": "Saved copy to data/imagery/csar_20230820_87b19db238_pokhran_rajasthan_csar_20230820.png"
+          },
+          {
+            "step": "THUMBNAIL_GENERATION",
+            "timestamp": "2026-10-03T17:16:41.096Z",
+            "status": "SUCCESS",
+            "details": "Thumbnail generated: data/thumbnails/csar_20230820_87b19db238_thumb.png"
+          },
+          {
+            "step": "QUALITY_ASSESSMENT",
+            "timestamp": "2026-10-03T17:16:41.096Z",
+            "status": "SUCCESS",
+            "details": "Completeness: 50%, Georeferencing: UNAVAILABLE"
+          }
+        ]
+      },
+      "thumbnailPath": "/app/applet/data/thumbnails/csar_20230820_87b19db238_thumb.png",
+      "storedFilePath": "/app/applet/data/imagery/csar_20230820_87b19db238_pokhran_rajasthan_csar_20230820.png",
+      "ingestedAt": "2026-10-03T17:16:41.072Z",
+      "processingVersion": "1.0.0-phase1-archive",
+      "status": "READY"
+    },
+    "msi_20240118_bcccb61863": {
+      "sceneId": "msi_20240118_bcccb61863",
+      "fileName": "sundarbans_mangrove_delta_msi_20240118.png",
+      "fileHash": "bcccb61863bc333fb56dcb6365aade28e0017abb2965d8a219541dbffe1d4c2f",
+      "format": "PNG",
+      "fileSizeBytes": 1449,
+      "width": 128,
+      "height": 128,
+      "bandCount": 4,
+      "bands": [
+        {
+          "index": 1,
+          "name": "Red",
+          "dataType": "uint8"
+        },
+        {
+          "index": 2,
+          "name": "Green",
+          "dataType": "uint8"
+        },
+        {
+          "index": 3,
+          "name": "Blue",
+          "dataType": "uint8"
+        }
+      ],
+      "crs": "unavailable",
+      "epsg": null,
+      "transform": null,
+      "bounds": null,
+      "resolution": null,
+      "acquisitionDate": "2024-01-18T05:10:00Z",
+      "sensor": "MSI",
+      "satellite": "UNKNOWN",
+      "modality": "optical",
+      "source": "ISRO / ESA Sentinel-2 MSI Multi-Spectral Archive",
+      "quality": {
+        "fileReadable": true,
+        "formatSupported": true,
+        "metadataCompletenessScore": 50,
+        "georeferencingStatus": "UNAVAILABLE",
+        "dimensionsValid": true,
+        "numericalValuesValid": true,
+        "nodataValue": null,
+        "nodataPercentage": null,
+        "usablePixelPercentage": 100,
+        "cloudCoverStatus": "NOT CHECKED",
+        "cloudCoverPercentage": null,
+        "warnings": [
+          "MISSING_GEOREFERENCE: Standard consumer raster format without embedded georeferencing tags."
+        ]
+      },
+      "provenance": {
+        "sceneId": "msi_20240118_bcccb61863",
+        "fileHash": "bcccb61863bc333fb56dcb6365aade28e0017abb2965d8a219541dbffe1d4c2f",
+        "sourceFileName": "sundarbans_mangrove_delta_msi_20240118.png",
+        "ingestionTimestamp": "2026-10-03T17:16:41.120Z",
+        "pipelineVersion": "1.0.0-phase1-archive",
+        "fileSizeBytes": 1449,
+        "steps": [
+          {
+            "step": "INGESTION_RECEIVED",
+            "timestamp": "2026-10-03T17:16:41.120Z",
+            "status": "SUCCESS",
+            "details": "File received: sundarbans_mangrove_delta_msi_20240118.png (1449 bytes, SHA-256: bcccb61863bc...)"
+          },
+          {
+            "step": "METADATA_EXTRACTION",
+            "timestamp": "2026-10-03T17:16:41.120Z",
+            "status": "SUCCESS",
+            "details": "Consumer raster parsed: 128x128, 4 bands. Georeferencing marked unavailable."
+          },
+          {
+            "step": "FILE_ARCHIVED",
+            "timestamp": "2026-10-03T17:16:41.121Z",
+            "status": "SUCCESS",
+            "details": "Saved copy to data/imagery/msi_20240118_bcccb61863_sundarbans_mangrove_delta_msi_20240118.png"
+          },
+          {
+            "step": "THUMBNAIL_GENERATION",
+            "timestamp": "2026-10-03T17:16:41.140Z",
+            "status": "SUCCESS",
+            "details": "Thumbnail generated: data/thumbnails/msi_20240118_bcccb61863_thumb.png"
+          },
+          {
+            "step": "QUALITY_ASSESSMENT",
+            "timestamp": "2026-10-03T17:16:41.140Z",
+            "status": "SUCCESS",
+            "details": "Completeness: 50%, Georeferencing: UNAVAILABLE"
+          }
+        ]
+      },
+      "thumbnailPath": "/app/applet/data/thumbnails/msi_20240118_bcccb61863_thumb.png",
+      "storedFilePath": "/app/applet/data/imagery/msi_20240118_bcccb61863_sundarbans_mangrove_delta_msi_20240118.png",
+      "ingestedAt": "2026-10-03T17:16:41.120Z",
+      "processingVersion": "1.0.0-phase1-archive",
+      "status": "READY"
+    },
+    "panmx_20231104_50a9048beb": {
+      "sceneId": "panmx_20231104_50a9048beb",
+      "fileName": "bengaluru_urban_complex_panmx_20231104.png",
+      "fileHash": "50a9048beb0729ee283f90e82ef009aafc9b5322682faf83ee4750ad50f2e3f6",
+      "format": "PNG",
+      "fileSizeBytes": 842,
+      "width": 128,
+      "height": 128,
+      "bandCount": 4,
+      "bands": [
+        {
+          "index": 1,
+          "name": "Red",
+          "dataType": "uint8"
+        },
+        {
+          "index": 2,
+          "name": "Green",
+          "dataType": "uint8"
+        },
+        {
+          "index": 3,
+          "name": "Blue",
+          "dataType": "uint8"
+        }
+      ],
+      "crs": "unavailable",
+      "epsg": null,
+      "transform": null,
+      "bounds": null,
+      "resolution": null,
+      "acquisitionDate": "2023-11-04T05:00:00Z",
+      "sensor": "PAN-MX",
+      "satellite": "UNKNOWN",
+      "modality": "optical",
+      "source": "ISRO Cartosat-2 PAN-MX High Resolution Imaging",
+      "quality": {
+        "fileReadable": true,
+        "formatSupported": true,
+        "metadataCompletenessScore": 50,
+        "georeferencingStatus": "UNAVAILABLE",
+        "dimensionsValid": true,
+        "numericalValuesValid": true,
+        "nodataValue": null,
+        "nodataPercentage": null,
+        "usablePixelPercentage": 100,
+        "cloudCoverStatus": "NOT CHECKED",
+        "cloudCoverPercentage": null,
+        "warnings": [
+          "MISSING_GEOREFERENCE: Standard consumer raster format without embedded georeferencing tags."
+        ]
+      },
+      "provenance": {
+        "sceneId": "panmx_20231104_50a9048beb",
+        "fileHash": "50a9048beb0729ee283f90e82ef009aafc9b5322682faf83ee4750ad50f2e3f6",
+        "sourceFileName": "bengaluru_urban_complex_panmx_20231104.png",
+        "ingestionTimestamp": "2026-10-03T17:16:41.157Z",
+        "pipelineVersion": "1.0.0-phase1-archive",
+        "fileSizeBytes": 842,
+        "steps": [
+          {
+            "step": "INGESTION_RECEIVED",
+            "timestamp": "2026-10-03T17:16:41.157Z",
+            "status": "SUCCESS",
+            "details": "File received: bengaluru_urban_complex_panmx_20231104.png (842 bytes, SHA-256: 50a9048beb07...)"
+          },
+          {
+            "step": "METADATA_EXTRACTION",
+            "timestamp": "2026-10-03T17:16:41.157Z",
+            "status": "SUCCESS",
+            "details": "Consumer raster parsed: 128x128, 4 bands. Georeferencing marked unavailable."
+          },
+          {
+            "step": "FILE_ARCHIVED",
+            "timestamp": "2026-10-03T17:16:41.158Z",
+            "status": "SUCCESS",
+            "details": "Saved copy to data/imagery/panmx_20231104_50a9048beb_bengaluru_urban_complex_panmx_20231104.png"
+          },
+          {
+            "step": "THUMBNAIL_GENERATION",
+            "timestamp": "2026-10-03T17:16:41.174Z",
+            "status": "SUCCESS",
+            "details": "Thumbnail generated: data/thumbnails/panmx_20231104_50a9048beb_thumb.png"
+          },
+          {
+            "step": "QUALITY_ASSESSMENT",
+            "timestamp": "2026-10-03T17:16:41.174Z",
+            "status": "SUCCESS",
+            "details": "Completeness: 50%, Georeferencing: UNAVAILABLE"
+          }
+        ]
+      },
+      "thumbnailPath": "/app/applet/data/thumbnails/panmx_20231104_50a9048beb_thumb.png",
+      "storedFilePath": "/app/applet/data/imagery/panmx_20231104_50a9048beb_bengaluru_urban_complex_panmx_20231104.png",
+      "ingestedAt": "2026-10-03T17:16:41.157Z",
+      "processingVersion": "1.0.0-phase1-archive",
+      "status": "READY"
+    }
+  },
+  "hashIndex": {
+    "cc08cce3db40124dea197f068d54312ee726094a0d515bf314ca6914421e4bb4": "msi_20220315_cc08cce3db",
+    "0f6ea7903cc8154ab62c581bf2c52c3fc757063abd2d924ea84f2797e1363f8f": "msi_20240315_0f6ea7903c",
+    "42ef41f4c0564a5031669e306755223ffdef98be3f9f676b6fb8d980b9563fb5": "liss4_20230510_42ef41f4c0",
+    "87b19db238b1bb04ce6c2f5594f6f110e659a095e51a8bb8f694f2fb8fb213fc": "csar_20230820_87b19db238",
+    "bcccb61863bc333fb56dcb6365aade28e0017abb2965d8a219541dbffe1d4c2f": "msi_20240118_bcccb61863",
+    "50a9048beb0729ee283f90e82ef009aafc9b5322682faf83ee4750ad50f2e3f6": "panmx_20231104_50a9048beb"
+  }
+}

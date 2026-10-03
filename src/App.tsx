@@ -6,13 +6,25 @@ import { WorkstationHeader } from './components/WorkstationHeader';
 import { SatelliteViewer } from './components/SatelliteViewer';
 import { UnifiedQuestionResultPanel } from './components/UnifiedQuestionResultPanel';
 import { SpecificationModal } from './components/SpecificationModal';
-import { SampleDataset, loadSampleDataset } from './data/sampleDatasets';
+import { SemanticRetrievalModal } from './components/SemanticRetrievalModal';
+import { MultiTemporalChangeSuite } from './components/MultiTemporalChangeSuite';
+import { AnalystReviewWorkspace } from './components/AnalystReviewWorkspace';
+import { SimilarSiteDiscoveryModal } from './components/SimilarSiteDiscoveryModal';
+import { EvaluationDiagnosticsModal } from './components/EvaluationDiagnosticsModal';
+import { SampleDataset, SAMPLE_DATASETS, loadSampleDataset } from './data/sampleDatasets';
 import { generateSihReport } from './utils/reportGenerator';
 import { AlertCircle, X, Compass, ShieldCheck } from 'lucide-react';
 
 export default function App() {
   const [trainingData, setTrainingData] = useState(OFFICIAL_SYSTEM_SPECIFICATION);
   const [isSpecModalOpen, setIsSpecModalOpen] = useState(false);
+  const [isSemanticModalOpen, setIsSemanticModalOpen] = useState(false);
+  const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
+  const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+  const [discoveryRefSceneId, setDiscoveryRefSceneId] = useState<string>('amaravati_krishna_river_s2');
+
+  // Active view: 'workstation' (default), 'temporal-lab' (multi-temporal comparison), or 'review' (analyst review queue)
+  const [workspaceView, setWorkspaceView] = useState<'workstation' | 'temporal-lab' | 'review'>('workstation');
 
   const [inputQuery, setInputQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -211,6 +223,16 @@ export default function App() {
     }
   };
 
+  const handleLoadDatasetById = (datasetId: string, initialQuery?: string) => {
+    const dataset = SAMPLE_DATASETS.find((d) => d.id === datasetId);
+    if (dataset) {
+      handleLoadDataset(dataset);
+      if (initialQuery) {
+        setInputQuery(initialQuery);
+      }
+    }
+  };
+
   const handleResetSession = () => {
     setImages([]);
     setInputQuery('');
@@ -304,6 +326,12 @@ export default function App() {
         sessionId={sessionId}
         onResetSession={handleResetSession}
         onOpenSpecModal={() => setIsSpecModalOpen(true)}
+        onOpenSemanticSearch={() => setIsSemanticModalOpen(true)}
+        onOpenDiscovery={() => setIsDiscoveryModalOpen(true)}
+        onOpenEvaluation={() => setIsEvaluationModalOpen(true)}
+        isBiTemporalAvailable={images.length >= 2}
+        activeWorkspaceView={workspaceView}
+        onChangeWorkspaceView={setWorkspaceView}
       />
 
       {/* Global Error Banner */}
@@ -322,66 +350,121 @@ export default function App() {
         </div>
       )}
 
-      {/* Mobile Tab Switcher (Viewer vs Question & Evidence) */}
-      <div className="flex lg:hidden bg-slate-900 border-b border-slate-800 p-1 shrink-0">
-        <button
-          onClick={() => setMobileTab('viewer')}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-            mobileTab === 'viewer' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Compass size={13} />
-          <span>Imagery Viewer ({images.length})</span>
-        </button>
-        <button
-          onClick={() => setMobileTab('results')}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-            mobileTab === 'results' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <ShieldCheck size={13} />
-          <span>Question &amp; Evidence</span>
-        </button>
-      </div>
+      {/* VIEW 1: DEDICATED ANALYST REVIEW WORKSPACE (Phase 7) */}
+      {workspaceView === 'review' ? (
+        <AnalystReviewWorkspace
+          onOpenTemporalLab={(beforeUrl, afterUrl) => {
+            if (beforeUrl && afterUrl) {
+              setWorkspaceView('temporal-lab');
+            }
+          }}
+          onOpenDiscovery={(sceneId) => {
+            setDiscoveryRefSceneId(sceneId);
+            setIsDiscoveryModalOpen(true);
+          }}
+        />
+      ) : (
+        <>
+          {/* Mobile Tab Switcher (Viewer vs Question & Evidence) */}
+          <div className="flex lg:hidden bg-slate-900 border-b border-slate-800 p-1 shrink-0">
+            <button
+              onClick={() => setMobileTab('viewer')}
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                mobileTab === 'viewer' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Compass size={13} />
+              <span>{workspaceView === 'temporal-lab' ? 'Temporal Lab' : `Imagery Viewer (${images.length})`}</span>
+            </button>
+            <button
+              onClick={() => setMobileTab('results')}
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                mobileTab === 'results' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <ShieldCheck size={13} />
+              <span>Question &amp; Evidence</span>
+            </button>
+          </div>
 
-      {/* 2. MAIN 2-COLUMN WORKSTATION LAYOUT */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 p-2 md:p-3 gap-2 md:gap-3 bg-slate-950">
-        
-        {/* LEFT / CENTER: Upload & Satellite Viewer (Primary visual focus, ~58% width) */}
-        <section className={`w-full lg:w-[58%] xl:w-[60%] h-full flex flex-col overflow-hidden ${
-          mobileTab !== 'viewer' ? 'hidden lg:flex' : 'flex'
-        }`}>
-          <SatelliteViewer
-            images={images}
-            selectedImageIndex={selectedImageIndex}
-            onSelectImage={setSelectedImageIndex}
-            onUploadFiles={handleUploadFiles}
-            onRemoveImage={handleRemoveImage}
-            onClearAll={handleClearAll}
-            onUpdateRelationship={handleUpdateRelationship}
-            onLoadDataset={handleLoadDataset}
-            groundingBoxes={latestResponse?.groundingBoxes || []}
-            activeTask={latestResponse?.taskClassification}
-            decision={latestResponse?.confidence.level}
-          />
-        </section>
+          {/* 2. MAIN 2-COLUMN WORKSTATION LAYOUT */}
+          <main className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 p-2 md:p-3 gap-2 md:gap-3 bg-slate-950">
+            
+            {/* LEFT / CENTER: Upload & Satellite Viewer OR Multi-Temporal Change Lab */}
+            <section className={`w-full lg:w-[58%] xl:w-[60%] h-full flex flex-col overflow-hidden ${
+              mobileTab !== 'viewer' ? 'hidden lg:flex' : 'flex'
+            }`}>
+              {workspaceView === 'temporal-lab' && images.length >= 2 ? (
+                <MultiTemporalChangeSuite
+                  beforeImage={images.find((i) => i.slot === 'before') || images[0]}
+                  afterImage={images.find((i) => i.slot === 'after') || images[1] || images[0]}
+                  onAskQuestionAboutChange={(query) => {
+                    setInputQuery(query);
+                    handleSubmitQuery();
+                    setWorkspaceView('workstation');
+                  }}
+                  onExportReport={handleDownloadReport}
+                />
+              ) : (
+                <SatelliteViewer
+                  images={images}
+                  selectedImageIndex={selectedImageIndex}
+                  onSelectImage={setSelectedImageIndex}
+                  onUploadFiles={handleUploadFiles}
+                  onRemoveImage={handleRemoveImage}
+                  onClearAll={handleClearAll}
+                  onUpdateRelationship={handleUpdateRelationship}
+                  onLoadDataset={handleLoadDataset}
+                  onOpenSemanticSearch={() => setIsSemanticModalOpen(true)}
+                  onOpenTemporalLab={() => setWorkspaceView('temporal-lab')}
+                  groundingBoxes={latestResponse?.groundingBoxes || []}
+                  activeTask={latestResponse?.taskClassification}
+                  decision={latestResponse?.confidence.level}
+                />
+              )}
+            </section>
 
-        {/* RIGHT: Question Box & Result / Evidence Gate (~42% width) */}
-        <section className={`w-full lg:w-[42%] xl:w-[40%] h-full flex flex-col overflow-hidden ${
-          mobileTab !== 'results' ? 'hidden lg:flex' : 'flex'
-        }`}>
-          <UnifiedQuestionResultPanel
-            inputQuery={inputQuery}
-            onChangeQuery={setInputQuery}
-            onSubmitQuery={handleSubmitQuery}
-            isLoading={isLoading}
-            images={images}
-            latestResponse={latestResponse}
-            onDownloadReport={handleDownloadReport}
-          />
-        </section>
+            {/* RIGHT: Question Box & Result / Evidence Gate (~42% width) */}
+            <section className={`w-full lg:w-[42%] xl:w-[40%] h-full flex flex-col overflow-hidden ${
+              mobileTab !== 'results' ? 'hidden lg:flex' : 'flex'
+            }`}>
+              <UnifiedQuestionResultPanel
+                inputQuery={inputQuery}
+                onChangeQuery={setInputQuery}
+                onSubmitQuery={handleSubmitQuery}
+                isLoading={isLoading}
+                images={images}
+                latestResponse={latestResponse}
+                onDownloadReport={handleDownloadReport}
+              />
+            </section>
 
-      </main>
+          </main>
+        </>
+      )}
+
+      {/* Semantic Satellite Retrieval Modal (SIH-26227) */}
+      <SemanticRetrievalModal
+        isOpen={isSemanticModalOpen}
+        onClose={() => setIsSemanticModalOpen(false)}
+        onLoadDatasetById={handleLoadDatasetById}
+        onSelectBiTemporalMode={() => setWorkspaceView('temporal-lab')}
+      />
+
+      {/* Similar-Site Discovery & Clustering Modal (Phase 6) */}
+      <SimilarSiteDiscoveryModal
+        isOpen={isDiscoveryModalOpen}
+        onClose={() => setIsDiscoveryModalOpen(false)}
+        referenceSceneId={discoveryRefSceneId}
+        onOpenTemporalLab={() => setWorkspaceView('temporal-lab')}
+        onSendToReviewQueue={() => setWorkspaceView('review')}
+      />
+
+      {/* Evaluation & Offline Diagnostics Modal (Phase 8) */}
+      <EvaluationDiagnosticsModal
+        isOpen={isEvaluationModalOpen}
+        onClose={() => setIsEvaluationModalOpen(false)}
+      />
 
       {/* System Specification Modal */}
       <SpecificationModal

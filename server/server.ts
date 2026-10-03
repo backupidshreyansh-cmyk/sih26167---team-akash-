@@ -8,6 +8,13 @@ import { chatRouter } from "./routes/chat.js";
 import { healthRouter } from "./routes/health.js";
 import { testRouter } from "./routes/test.js";
 import { eoRouter } from "./routes/eo.js";
+import { archiveRouter } from "./routes/archive.js";
+import { searchRouter } from "./routes/search.js";
+import { temporalRouter } from "./routes/temporal.js";
+import { discoveryRouter } from "./routes/discovery.js";
+import { reviewRouter } from "./routes/review.js";
+import { evaluationRouter } from "./routes/evaluation.js";
+import { ArchiveSeeder } from "./archive/seedArchive.js";
 import "./tools/eoTools.js";
 
 async function startServer() {
@@ -23,6 +30,12 @@ async function startServer() {
   app.use("/api/chat", chatRouter);
   app.use("/api/system", testRouter);
   app.use("/api/eo", eoRouter);
+  app.use("/api/archive", archiveRouter);
+  app.use("/api/search", searchRouter);
+  app.use("/api/temporal", temporalRouter);
+  app.use("/api/discovery", discoveryRouter);
+  app.use("/api/review", reviewRouter);
+  app.use("/api/evaluation", evaluationRouter);
 
   // API Error handler to ensure JSON responses for payload too large or parsing errors
   app.use("/api", (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -54,6 +67,10 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    // Seed canonical scenes if archive catalog is empty
+    ArchiveSeeder.seedDefaultArchiveIfEmpty().catch((err) => {
+      console.warn('Initial archive seeding notice:', err?.message || err);
+    });
   });
 }
 

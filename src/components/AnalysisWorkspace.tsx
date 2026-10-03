@@ -121,7 +121,7 @@ export function AnalysisWorkspace({
             <div>
               <span className="font-bold">INCONCLUSIVE</span>
               <span className="text-[11px] font-normal text-amber-400/90 ml-1.5 hidden sm:inline">
-                Available evidence is insufficient to verify
+                Baseline recorded; temporal comparison requires second observation
               </span>
             </div>
           </div>

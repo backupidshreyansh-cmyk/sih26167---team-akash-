@@ -169,73 +169,204 @@ export function classifyQueryIntent(query: string): QueryIntent {
 }
 
 export function classifyTask(query: string, images: NormalizedImage[], hasSessionContext = false): TaskClassification {
-  const q = query.toLowerCase();
-  
+  const q = query.toLowerCase().trim();
+
+  // 1. Similar-Site Discovery (must check before generic search)
+  if (
+    q.includes('similar to this') ||
+    q.includes('find more like this') ||
+    q.includes('similar site') ||
+    q.includes('similar locations') ||
+    q.includes('comparable sites') ||
+    q.includes('locations similar') ||
+    q.includes('cluster similar') ||
+    q.includes('more like this') ||
+    q.includes('find similar')
+  ) {
+    return 'SIMILAR_SITE_DISCOVERY';
+  }
+
+  // 2. Semantic Archive Search / Retrieval (search without an image, or explicit archive search request)
+  if (
+    q.startsWith('find ') ||
+    q.startsWith('search ') ||
+    q.startsWith('retrieve ') ||
+    q.includes('find areas') ||
+    q.includes('find scenes') ||
+    q.includes('find newly') ||
+    q.includes('find locations') ||
+    q.includes('search archive') ||
+    q.includes('search for scenes') ||
+    q.includes('show scenes showing') ||
+    q.includes('locate scenes') ||
+    q.includes('retrieve imagery') ||
+    q.includes('find structures') ||
+    q.includes('find vehicles')
+  ) {
+    return 'SEMANTIC_RETRIEVAL';
+  }
+
+  // 3. Metadata & Provenance inspection
+  if (
+    q.includes('acquisition date') ||
+    q.includes('sensor and source') ||
+    q.includes('show metadata') ||
+    q.includes('inspect metadata') ||
+    q.includes('acquisition metadata') ||
+    q.includes('what sensor') ||
+    q.includes('what satellite') ||
+    q.includes('provenance') ||
+    q.includes('epsg') ||
+    q.includes('crs') ||
+    q.includes('resolution') ||
+    q.includes('pixel dimension') ||
+    q.includes('dimensions and bands')
+  ) {
+    return 'METADATA_PROVENANCE';
+  }
+
+  // 4. False-Alarm Assessment
+  if (
+    q.includes('seasonal') ||
+    q.includes('false alarm') ||
+    q.includes('illumination') ||
+    q.includes('sun angle') ||
+    q.includes('shadow artifact') ||
+    q.includes('sensor artifact') ||
+    q.includes('misregistration') ||
+    q.includes('registration error') ||
+    q.includes('cloud shadow') ||
+    q.includes('could this be seasonal') ||
+    q.includes('could this difference be seasonal') ||
+    q.includes('check for seasonal') ||
+    q.includes('haze') ||
+    q.includes('radiometric')
+  ) {
+    return 'FALSE_ALARM_ASSESSMENT';
+  }
+
+  // 5. Change Verification (did X appear / did X change / verify change)
+  if (
+    q.includes('did construction appear') ||
+    q.includes('did construction occur') ||
+    q.includes('did change occur') ||
+    q.includes('verify change') ||
+    q.includes('confirm change') ||
+    q.includes('did building appear') ||
+    q.includes('did structure appear') ||
+    q.includes('assess possible construction') ||
+    q.includes('assess water extent change') ||
+    q.includes('did it appear between') ||
+    q.includes('did expansion happen')
+  ) {
+    return 'CHANGE_VERIFICATION';
+  }
+
+  // 6. Multi-Temporal Change (what changed / compare observations)
+  if (
+    q.includes('what changed') ||
+    q.includes('difference between') ||
+    q.includes('compare observations') ||
+    q.includes('before and after') ||
+    q.includes('temporal change') ||
+    q.includes('review change evidence') ||
+    q.includes('what differs') ||
+    q.includes('between these observations') ||
+    q.includes('between these dates')
+  ) {
+    return 'MULTITEMPORAL_CHANGE';
+  }
+
+  // 7. Analyst Review & Audit
+  if (
+    q.includes('analyst review') ||
+    q.includes('review queue') ||
+    q.includes('audit status') ||
+    q.includes('mark confirmed') ||
+    q.includes('mark rejected')
+  ) {
+    return 'ANALYST_REVIEW';
+  }
+
+  // Check for optical + SAR cross-modal pair
+  const isOpticalSar = images.length === 2 && images.some(i => i.modality === 'OPTICAL') && images.some(i => i.modality === 'SAR');
+  if (isOpticalSar && (q.includes('sar') || q.includes('optical') || q.includes('radar') || q.includes('cross-modal') || q.includes('complementary') || q.includes('compare'))) {
+    return 'OPTICAL_SAR_ANALYSIS';
+  }
+
+  // SAR specialized queries
+  if (!isOpticalSar && (q.includes('sar ') || q.includes(' sar') || q.includes('radar') || (images.length === 1 && images[0]?.modality === 'SAR'))) {
+    return 'SAR_ANALYSIS';
+  }
+
+  // Zero-image input handling
   if (images.length === 0) {
-      if (hasSessionContext) {
-          return 'FOLLOW_UP';
-      }
-      return 'UNSUPPORTED_QUERY';
+    if (hasSessionContext) {
+      return 'FOLLOW_UP';
+    }
+    if (
+      q.startsWith('find ') ||
+      q.startsWith('search ') ||
+      q.startsWith('retrieve ') ||
+      q.includes('find areas') ||
+      q.includes('find scenes') ||
+      q.includes('find newly') ||
+      q.includes('search archive') ||
+      q.includes('show scenes')
+    ) {
+      return 'SEMANTIC_RETRIEVAL';
+    }
+    return 'UNSUPPORTED_QUERY';
   }
 
   if (hasSessionContext && (q.includes('what did you mean') || q.includes('why') || q.includes('expand on') || q.includes('tell me more') || q.includes('previous'))) {
-      return 'FOLLOW_UP';
+    return 'FOLLOW_UP';
   }
 
-  const intent = classifyQueryIntent(query);
-
+  // 8. Multi-image observations
   if (images.length === 2) {
-      const isBeforeAfter = images.some(i => i.temporalRole === 'BEFORE') && images.some(i => i.temporalRole === 'AFTER');
-      const isOpticalSar = images.some(i => i.modality === 'OPTICAL') && images.some(i => i.modality === 'SAR');
-      
-      // If the intent is explicitly VISUAL_OBSERVATION, do NOT force BI_TEMPORAL_ANALYSIS!
-      // A visual-observation question on images labeled before/after asks about visible features, not temporal change.
-      if (intent === 'VISUAL_OBSERVATION') {
-          if (q.includes('describe') || q.includes('what is happening') || q.includes('caption') || q.includes('what is visible')) {
-              return 'SCENE_DESCRIPTION';
-          }
-          if (isOpticalSar) {
-              return 'OPTICAL_SAR_ANALYSIS';
-          }
-          return 'SINGLE_IMAGE_VQA';
-      }
+    const isBeforeAfter = images.some(i => i.temporalRole === 'BEFORE') && images.some(i => i.temporalRole === 'AFTER');
+    const isOpticalSar = images.some(i => i.modality === 'OPTICAL') && images.some(i => i.modality === 'SAR');
+    const intent = classifyQueryIntent(query);
 
-      if (isBeforeAfter || q.includes('change') || q.includes('difference') || q.includes('before') || q.includes('after') || q.includes('increase') || q.includes('decrease') || q.includes('temporal')) {
-          return 'BI_TEMPORAL_ANALYSIS';
+    if (intent === 'VISUAL_OBSERVATION') {
+      if (q.includes('describe') || q.includes('what is happening') || q.includes('caption') || q.includes('what is visible')) {
+        return 'SCENE_DESCRIPTION';
       }
-      if (isOpticalSar || q.includes('sar') || q.includes('optical') || q.includes('radar') || q.includes('cross-modal') || q.includes('complementary')) {
-          return 'OPTICAL_SAR_ANALYSIS';
+      if (isOpticalSar) {
+        return 'OPTICAL_SAR_ANALYSIS';
       }
-      return 'OPTICAL_SAR_ANALYSIS'; 
+      return 'SINGLE_IMAGE_VQA';
+    }
+
+    if (isOpticalSar && (q.includes('sar') || q.includes('optical') || q.includes('cross-modal') || q.includes('complementary'))) {
+      return 'OPTICAL_SAR_ANALYSIS';
+    }
+
+    if (isBeforeAfter || q.includes('change') || q.includes('difference') || q.includes('temporal') || q.includes('expand')) {
+      return 'BI_TEMPORAL_ANALYSIS';
+    }
+
+    if (isOpticalSar) {
+      return 'OPTICAL_SAR_ANALYSIS';
+    }
+    return 'BI_TEMPORAL_ANALYSIS';
   }
 
+  // 9. Single-image SAR observation
   if (images.length === 1 && images[0].modality === 'SAR' && !q.includes('optical')) {
-      return 'SAR_ANALYSIS';
+    return 'SAR_ANALYSIS';
   }
 
+  // 10. Counting & Grounding specialized checks
   if (q.includes('count') || q.includes('how many')) {
-      return 'COUNTING';
+    return 'COUNTING';
   }
 
   if (q.includes('where is') || q.includes('locate') || q.includes('ground') || q.includes('bbox')) {
-      return 'TEXT_GUIDED_GROUNDING';
+    return 'TEXT_GUIDED_GROUNDING';
   }
 
-  if (q.includes('describe') || q.includes('what is happening') || q.includes('caption')) {
-      return 'SCENE_DESCRIPTION';
-  }
-
-  if (q.includes('sar ') || q.includes('radar')) {
-      return 'SAR_ANALYSIS';
-  }
-  
-  if (q.includes('optical')) {
-      return 'OPTICAL_ANALYSIS';
-  }
-  
-  if (q.match(/\b(not|no|none)\b/)) {
-      return 'NEGATIVE_QUERY';
-  }
-
-  return 'SINGLE_IMAGE_VQA';
+  // 11. Earth-observation Scene Interpretation (Default for 1 observation or visual query)
+  return 'SCENE_INTERPRETATION';
 }

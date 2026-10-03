@@ -1,6 +1,6 @@
 {
   "name": "SatQuery AI",
-  "description": "Interactive Vision-Language Assistant for Multimodal Remote Sensing Image Analysis (SIH-26167).",
+  "description": "Semantic Retrieval and Multi-Temporal Change Analysis of Satellite Imagery with Evidence Verification (SIH 2026 PS 26227).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

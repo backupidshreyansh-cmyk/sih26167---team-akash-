@@ -1,0 +1,130 @@
+{
+  "runId": "RUN-BENCHMARK-1791047821181",
+  "timestamp": "2026-10-03T17:17:01.232Z",
+  "networkStatus": "OFFLINE_CERTIFIED",
+  "hardware": {
+    "targetHardware": {
+      "cpu": "AMD Ryzen 7 7435HS (8 Cores / 16 Threads)",
+      "gpu": "NVIDIA RTX 4050 Laptop GPU (6 GB VRAM)",
+      "vram": "6 GB GDDR6",
+      "ram": "24 GB DDR5"
+    },
+    "currentEnvironment": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpuCores": 2,
+      "totalMemGB": "4.0 GB",
+      "freeMemGB": "3.4 GB",
+      "nodeVersion": "v22.23.2"
+    }
+  },
+  "archiveDiagnostics": {
+    "totalScenes": 6,
+    "readyScenes": 6,
+    "failedScenes": 0,
+    "totalIndexedVectors": 6,
+    "vectorDimension": 512,
+    "totalStorageBytes": 321367,
+    "totalStorageFormatted": "313.8 KB",
+    "vectorIndexSizeBytes": 53384,
+    "vectorIndexSizeFormatted": "52.1 KB",
+    "modalitiesCount": {
+      "optical": 6,
+      "sar": 0,
+      "multispectral": 0,
+      "unknown": 0
+    },
+    "sensorsCount": {
+      "PNG": 6
+    }
+  },
+  "latencies": {
+    "metadataOnlySearchMs": 0.36,
+    "semanticSearchMs": {
+      "parsingMs": 1.09,
+      "embeddingMs": 1.66,
+      "vectorSearchMs": 0.07,
+      "rerankingMs": 0.4,
+      "totalMs": 3.4
+    },
+    "imageToImageSearchMs": 0.02,
+    "similarSiteDiscoveryMs": 0.96,
+    "temporalChangeAnalysisMs": {
+      "registrationMs": 0.53,
+      "differencingMs": 2.44,
+      "falseAlarmGateMs": 0.25,
+      "totalMs": 3.23
+    },
+    "incrementalIngestionMs": {
+      "newSceneIngestMs": 37.48,
+      "duplicateIngestMs": 0.25,
+      "duplicateReusedWithoutReprocessing": true
+    }
+  },
+  "capabilityMatrix": [
+    {
+      "phase": "Phase 1",
+      "capability": "Local Satellite Archive Foundation & Ingestion",
+      "status": "IMPLEMENTED",
+      "implementation": "IngestionEngine, CatalogService, GeoreferencingEngine, ArchiveConfig",
+      "testStatus": "PASSED (tests/archive_ingestion.test.ts)",
+      "knownLimitations": "Consumer rasters (PNG/JPG) without world files lack authoritative CRS; explicitly flagged."
+    },
+    {
+      "phase": "Phase 2",
+      "capability": "Local 512-D Embedding Engine & Local Vector Index",
+      "status": "IMPLEMENTED",
+      "implementation": "LocalVectorIndex, EmbeddingEngine, EmbeddingCache, ModelSpec",
+      "testStatus": "PASSED (Unit tests & Vector search benchmarks)",
+      "knownLimitations": "Fixed 512-D float vectors; incremental additions supported without full re-indexing."
+    },
+    {
+      "phase": "Phase 3",
+      "capability": "Semantic Satellite Retrieval & Reranking",
+      "status": "IMPLEMENTED",
+      "implementation": "QueryParser, SemanticSearchService, Candidate Reranker",
+      "testStatus": "PASSED (Verified against multi-temporal natural language queries)",
+      "knownLimitations": "Reranker weights transparently split between semantic, metadata, temporal, and quality."
+    },
+    {
+      "phase": "Phase 4",
+      "capability": "Multi-Temporal Change Discovery Engine",
+      "status": "IMPLEMENTED",
+      "implementation": "TemporalGroupingEngine, ChangeDetectionEngine, EarliestChangeDetector",
+      "testStatus": "PASSED (Chronological alignment, differencing, and region extraction verified)",
+      "knownLimitations": "Earliest observation date bounded by archive temporal resolution."
+    },
+    {
+      "phase": "Phase 5",
+      "capability": "False-Alarm Suppression & Quality Assessment",
+      "status": "IMPLEMENTED",
+      "implementation": "QualityAssessmentEngine, FalseAlarmDecisionEngine",
+      "testStatus": "PASSED (Registration, seasonal variance, and spatial coherence gates verified)",
+      "knownLimitations": "Cloud shadow discrimination requires multi-band optical or SAR cross-validation."
+    },
+    {
+      "phase": "Phase 6",
+      "capability": "Similar-Site Discovery, Clustering & Spatial Deduplication",
+      "status": "IMPLEMENTED",
+      "implementation": "SimilarSiteService, ClusteringEngine (Spherical K-Means / Medoid)",
+      "testStatus": "PASSED (tests/discovery_and_clustering.test.ts)",
+      "knownLimitations": "Clustering performed on top-K retrieved candidates to ensure real-time laptop responsiveness."
+    },
+    {
+      "phase": "Phase 7",
+      "capability": "Analyst Review Queue, Decisions, Feedback & Provenance",
+      "status": "IMPLEMENTED",
+      "implementation": "ReviewQueueService, FeedbackStore, FeedbackReranker, AuditTrailService, ExportService",
+      "testStatus": "PASSED (tests/analyst_review_workflow.test.ts)",
+      "knownLimitations": "Feedback adjustment scoped deterministically (+0.05 / -0.10); no runtime black-box training."
+    },
+    {
+      "phase": "Phase 8",
+      "capability": "Final Offline Hardening, Diagnostics & Reproducibility",
+      "status": "IMPLEMENTED",
+      "implementation": "EvaluationEngine, Network Audit, Resource Monitoring, Benchmark Runner",
+      "testStatus": "PASSED (tests/offline_evaluation_benchmark.test.ts)",
+      "knownLimitations": "GPU acceleration requires local CUDA environment; CPU fallback fully functional."
+    }
+  ]
+}

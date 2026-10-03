@@ -1,0 +1,69 @@
+[
+  {
+    "eventId": "EVT-1791047817322-549e2",
+    "timestamp": "2026-10-03T17:16:57.322Z",
+    "runId": "RUN-20261003-171657-EE50",
+    "sceneId": "msi_20240315_0f6ea7903c",
+    "operation": "CANDIDATE_RETRIEVED",
+    "status": "SUCCESS",
+    "details": {
+      "referenceSceneId": "msi_20240315_0f6ea7903c",
+      "totalDiscovered": 5,
+      "clustersCount": 2,
+      "isCacheHit": false
+    },
+    "relevantVersion": "1.0.0-audit-trail"
+  },
+  {
+    "eventId": "EVT-1791047812995-29084",
+    "timestamp": "2026-10-03T17:16:52.995Z",
+    "runId": "RUN-20261003-171652-0342",
+    "operation": "QUERY_EXECUTED",
+    "status": "SUCCESS",
+    "details": {
+      "query": "Find newly built structures near rivers between 2022 and 2024",
+      "retrievedCount": 6,
+      "totalCatalogScenes": 6
+    },
+    "relevantVersion": "1.0.0-audit-trail"
+  },
+  {
+    "eventId": "EVT-1791047727424-cb016",
+    "timestamp": "2026-10-03T17:15:27.424Z",
+    "runId": "RUN-20261003-171527-F574",
+    "operation": "QUERY_EXECUTED",
+    "status": "SUCCESS",
+    "details": {
+      "query": "structures near rivers",
+      "retrievedCount": 0,
+      "totalCatalogScenes": 0
+    },
+    "relevantVersion": "1.0.0-audit-trail"
+  },
+  {
+    "eventId": "EVT-1791047723774-c0d4f",
+    "timestamp": "2026-10-03T17:15:23.774Z",
+    "runId": "RUN-20261003-171523-EF1C",
+    "operation": "QUERY_EXECUTED",
+    "status": "SUCCESS",
+    "details": {
+      "query": "Find newly built structures near rivers between 2023 and 2025",
+      "retrievedCount": 0,
+      "totalCatalogScenes": 0
+    },
+    "relevantVersion": "1.0.0-audit-trail"
+  },
+  {
+    "eventId": "EVT-1791047719587-abf2a",
+    "timestamp": "2026-10-03T17:15:19.587Z",
+    "runId": "RUN-20261003-171519-7F77",
+    "operation": "QUERY_EXECUTED",
+    "status": "SUCCESS",
+    "details": {
+      "query": "Find newly built structures near rivers between 2023 and 2025",
+      "retrievedCount": 0,
+      "totalCatalogScenes": 0
+    },
+    "relevantVersion": "1.0.0-audit-trail"
+  }
+]

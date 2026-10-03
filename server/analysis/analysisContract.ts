@@ -22,7 +22,19 @@ import { classifyQueryIntent } from '../agent/taskClassifier.js';
 
 export type EvidenceSufficiency = 'STRONG' | 'MODERATE' | 'WEAK' | 'INSUFFICIENT' | 'CONFLICTING';
 
-export type FinalDecision = 'VERIFIED' | 'INCONCLUSIVE' | 'NEEDS_MORE_DATA' | 'NEEDS_MORE_EVIDENCE' | 'EVIDENCE_CONFLICT' | 'INVALID_INPUT';
+export type FinalDecision = 
+  | 'VERIFIED' 
+  | 'SUPPORTED_CHANGE'
+  | 'POSSIBLE_CHANGE'
+  | 'LIKELY_SEASONAL_VARIATION'
+  | 'REGISTRATION_UNCERTAIN'
+  | 'NO_SIGNIFICANT_CHANGE'
+  | 'CROSS_SENSOR_UNCERTAIN'
+  | 'INCONCLUSIVE' 
+  | 'NEEDS_MORE_DATA' 
+  | 'NEEDS_MORE_EVIDENCE' 
+  | 'EVIDENCE_CONFLICT' 
+  | 'INVALID_INPUT';
 
 export type VerificationLevel = 0 | 1 | 2 | 3;
 
@@ -40,7 +52,7 @@ export interface AnalysisContract {
   // 5. REQUIRED EVIDENCE: Exactly what additional data would be needed
   observedAndMeasured: string[];
   inferred: string[];
-  verified: string[];
+  verified?: string[];
   notEstablished: string[];
 
   initialHypothesis: string;
@@ -319,16 +331,16 @@ export function validateAndNormalizeAnalysisContract(
     } else {
       finalDecision = 'INCONCLUSIVE';
     }
-    whyNotVerified = whyNotVerified || "Available evidence is insufficient to verify the claim without guessing.";
-    requiredObservation = requiredObservation || "Additional observation with calibrated spectral bands or temporal baseline.";
-    recommendedAction = recommendedAction || "Discover candidate observations in official Indian EO catalogue (Bhoonidhi / MOSDAC).";
+    whyNotVerified = whyNotVerified || "Observation establishes baseline surface characteristics, but verifying specific ground transformation requires temporal comparison or auxiliary data.";
+    requiredObservation = requiredObservation || "Additional temporal observation or auxiliary GIS vector reference.";
+    recommendedAction = recommendedAction || "Search local satellite archive for co-located temporal epochs or similar sites.";
   } else if (evidenceSufficiency === 'STRONG' || evidenceSufficiency === 'MODERATE') {
     if (rawDecision.includes('VERIFIED')) {
       // RULE: Do not say VERIFIED when evidence only supports visual observation or plausible interpretation
       if (isCausalOrLandUseAttribution) {
         finalDecision = 'INCONCLUSIVE';
-        whyNotVerified = whyNotVerified || "The difference or visual appearance is consistent with plausible interpretations, but cannot be verified specifically as permanent land-use change, construction cause, or deforestation without comparable seasonal baselines and calibrated spectral data.";
-        requiredObservation = requiredObservation || "Comparable temporal imagery, appropriate spectral evidence (NDVI/SWIR), and artifact/confounder checks.";
+        whyNotVerified = whyNotVerified || "The difference or visual appearance is consistent with plausible interpretations, but cannot be verified specifically as permanent land-use change, construction cause, or deforestation without comparable seasonal baselines and temporal persistence.";
+        requiredObservation = requiredObservation || "Comparable temporal imagery and artifact/confounder checks.";
       } else if (contradictingEvidence.length > 0 && alternativeExplanations.length > 0 && !raw.verificationResult?.toLowerCase().includes('verified')) {
         finalDecision = 'INCONCLUSIVE';
         whyNotVerified = whyNotVerified || "Alternative physical explanation or confounder casts doubt on the primary hypothesis.";

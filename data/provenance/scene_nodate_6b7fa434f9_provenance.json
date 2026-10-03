@@ -1,0 +1,40 @@
+{
+  "sceneId": "scene_nodate_6b7fa434f9",
+  "fileHash": "6b7fa434f92a8b80aab02d9bf1a12e49ffcae424e4013a1c4f68b67e3d2bbcd0",
+  "sourceFileName": "bench_sample_1791047821189.png",
+  "ingestionTimestamp": "2026-10-03T17:17:01.189Z",
+  "pipelineVersion": "1.0.0-phase1-archive",
+  "fileSizeBytes": 70,
+  "steps": [
+    {
+      "step": "INGESTION_RECEIVED",
+      "timestamp": "2026-10-03T17:17:01.189Z",
+      "status": "SUCCESS",
+      "details": "File received: bench_sample_1791047821189.png (70 bytes, SHA-256: 6b7fa434f92a...)"
+    },
+    {
+      "step": "METADATA_EXTRACTION",
+      "timestamp": "2026-10-03T17:17:01.189Z",
+      "status": "SUCCESS",
+      "details": "Consumer raster parsed: 1x1, 4 bands. Georeferencing marked unavailable."
+    },
+    {
+      "step": "FILE_ARCHIVED",
+      "timestamp": "2026-10-03T17:17:01.190Z",
+      "status": "SUCCESS",
+      "details": "Saved copy to data/imagery/scene_nodate_6b7fa434f9_bench_sample_1791047821189.png"
+    },
+    {
+      "step": "THUMBNAIL_GENERATION",
+      "timestamp": "2026-10-03T17:17:01.207Z",
+      "status": "SUCCESS",
+      "details": "Thumbnail generated: data/thumbnails/scene_nodate_6b7fa434f9_thumb.png"
+    },
+    {
+      "step": "QUALITY_ASSESSMENT",
+      "timestamp": "2026-10-03T17:17:01.207Z",
+      "status": "SUCCESS",
+      "details": "Completeness: 35%, Georeferencing: UNAVAILABLE"
+    }
+  ]
+}

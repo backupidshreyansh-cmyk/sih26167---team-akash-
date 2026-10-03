@@ -15,7 +15,7 @@ export type EOAOI = {
   lng?: number;
 };
 
-export type EOAscendingDescending = 'ASCENDING' | 'DESCENDING' | 'UNKNOWN';
+export type EOAscendingDescending = 'ASCENDING' | 'DESCENDING' | 'UNKNOWN' | 'GEOSTATIONARY';
 
 export interface EOObservation {
   source: EOSourceProvider;

@@ -48,64 +48,98 @@ export function UnifiedQuestionResultPanel({
   const [eoSearchError, setEoSearchError] = useState<string | null>(null);
 
   // Dynamic suggestion questions based on current input configuration
-  // Keep suggestions honest and straightforward, asking only about visible colors, shapes, textures, and patterns
+  // Aligned with SIH 2026 PS 26227 Earth-observation analyst workflows
   const dynamicSuggestions = React.useMemo(() => {
-    const hasSar = images.some(i => i.slot === 'sar' || i.metadata?.modality === 'SAR');
-    const isTemporal = images.length === 2 && (images.some(i => i.slot === 'before') || images.some(i => i.slot === 'after'));
-    const isCrossModal = images.length === 2 && hasSar && images.some(i => i.slot === 'optical' || i.metadata?.modality === 'OPTICAL');
-
-    if (isCrossModal) {
+    if (images.length >= 2) {
       return [
-        "What colors and patterns are visible across these two images?",
-        "Compare the visible shapes and textures between the two observations.",
-        "Are there features visible in one observation that differ in the other?"
+        "What changed between these observations?",
+        "Assess possible construction",
+        "Assess water extent change",
+        "Check for seasonal explanation",
+        "Review change evidence"
       ];
     }
 
-    if (isTemporal) {
+    if (images.length === 1) {
       return [
-        "What differences in colors and shapes are visible between these two images?",
-        "What visible features stayed the same between before and after?",
-        "Describe differences in color regions between the two scenes."
-      ];
-    }
-
-    if (hasSar) {
-      return [
-        "Describe the visible textures and light/dark regions.",
-        "What geometric shapes or bright reflectors are visible?",
-        "Are smooth dark specular surfaces visible?"
+        "Describe the scene",
+        "Find visible development",
+        "Identify water and surrounding land features",
+        "Search for similar locations",
+        "Compare with another observation",
+        "Inspect acquisition metadata"
       ];
     }
 
     return [
-      "What is visible in this image?",
-      "Is vegetation present?",
-      "Describe the visible features, colors, and patterns."
+      "Find areas with new construction near a river",
+      "Find scenes showing large vehicle concentrations on open ground",
+      "Find dense built-up areas near major roads",
+      "Search the Earth-observation archive"
     ];
   }, [images]);
 
-  // Extract strict Decision Status
+  // Extract strict Decision Status compliant with PS 26227
   const getDecisionStatus = (contractDecision?: string) => {
     const raw = (contractDecision || '').toUpperCase();
-    if (raw === 'VERIFIED') {
+    if (raw === 'SUPPORTED_CHANGE' || raw === 'VERIFIED') {
       return {
-        label: 'VERIFIED',
+        label: raw === 'SUPPORTED_CHANGE' ? 'SUPPORTED CHANGE' : 'VERIFIED',
         textColor: 'text-emerald-400',
         borderColor: 'border-emerald-500/30',
         bgColor: 'bg-emerald-950/30',
         icon: <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />,
-        description: 'Required evidence exists, is valid, and no material contradiction remains.'
+        description: 'Persistent spatial difference verified; alignment validated; no dominant confounder.'
       };
     }
-    if (raw.includes('CONFLICT')) {
+    if (raw === 'POSSIBLE_CHANGE') {
       return {
-        label: 'EVIDENCE CONFLICT',
+        label: 'POSSIBLE CHANGE',
+        textColor: 'text-amber-400',
+        borderColor: 'border-amber-500/30',
+        bgColor: 'bg-amber-950/30',
+        icon: <AlertTriangle size={16} className="text-amber-400 shrink-0" />,
+        description: 'Candidate difference detected. Further temporal evidence is recommended before treating as confirmed.'
+      };
+    }
+    if (raw === 'LIKELY_SEASONAL_VARIATION') {
+      return {
+        label: 'LIKELY SEASONAL VARIATION',
+        textColor: 'text-yellow-400',
+        borderColor: 'border-yellow-500/30',
+        bgColor: 'bg-yellow-950/30',
+        icon: <AlertTriangle size={16} className="text-yellow-400 shrink-0" />,
+        description: 'Differences consistent with agricultural phenology or seasonal vegetation cycles.'
+      };
+    }
+    if (raw === 'REGISTRATION_UNCERTAIN') {
+      return {
+        label: 'REGISTRATION UNCERTAIN',
+        textColor: 'text-orange-400',
+        borderColor: 'border-orange-500/30',
+        bgColor: 'bg-orange-950/30',
+        icon: <AlertCircle size={16} className="text-orange-400 shrink-0" />,
+        description: 'Sub-pixel co-registration ambiguity detected. Edge differences may be alignment artifacts.'
+      };
+    }
+    if (raw === 'NO_SIGNIFICANT_CHANGE') {
+      return {
+        label: 'NO SIGNIFICANT CHANGE',
+        textColor: 'text-blue-400',
+        borderColor: 'border-blue-500/30',
+        bgColor: 'bg-blue-950/30',
+        icon: <CheckCircle2 size={16} className="text-blue-400 shrink-0" />,
+        description: 'Surface footprint and radiometric moments remain stable between observations.'
+      };
+    }
+    if (raw.includes('CONFLICT') || raw === 'CROSS_SENSOR_UNCERTAIN') {
+      return {
+        label: raw === 'CROSS_SENSOR_UNCERTAIN' ? 'CROSS SENSOR UNCERTAIN' : 'EVIDENCE CONFLICT',
         textColor: 'text-rose-400',
         borderColor: 'border-rose-500/30',
         bgColor: 'bg-rose-950/30',
         icon: <XCircle size={16} className="text-rose-400 shrink-0" />,
-        description: 'Valid evidence sources or sensor modalities materially disagree.'
+        description: 'Sensor modalities or physical signatures present conflicting indications.'
       };
     }
     if (raw.includes('NEEDS_MORE') || raw.includes('MORE_DATA')) {
@@ -115,7 +149,7 @@ export function UnifiedQuestionResultPanel({
         borderColor: 'border-sky-500/30',
         bgColor: 'bg-sky-950/30',
         icon: <AlertCircle size={16} className="text-sky-400 shrink-0" />,
-        description: 'The system identified missing evidence required to answer reliably without guessing.'
+        description: 'Temporal comparison requires an additional observation from another acquisition date.'
       };
     }
     return {
@@ -124,11 +158,15 @@ export function UnifiedQuestionResultPanel({
       borderColor: 'border-amber-500/30',
       bgColor: 'bg-amber-950/30',
       icon: <AlertTriangle size={16} className="text-amber-400 shrink-0" />,
-      description: 'Available evidence is insufficient to establish the requested claim.'
+      description: 'Observation verified as baseline. Multi-temporal comparison requires an additional observation.'
     };
   };
 
-  const decision = getDecisionStatus(latestResponse?.contract?.finalDecision);
+  const decision = getDecisionStatus(
+    latestResponse?.contract?.finalDecision || 
+    latestResponse?.confidence?.finalDecision || 
+    latestResponse?.confidence?.level
+  );
 
   // Search Bhoonidhi / MOSDAC catalogue for missing observation
   const handleDiscoverEoData = async () => {
@@ -203,10 +241,13 @@ export function UnifiedQuestionResultPanel({
       <div className="p-3.5 border-b border-slate-800 bg-slate-900/90 shrink-0">
         <div className="flex items-center justify-between mb-1.5">
           <label className="text-xs font-semibold text-slate-200">
-            Question
+            Earth-Observation Investigation Bay
           </label>
-          <span className="text-[11px] text-slate-500 font-mono">
-            {images.length > 0 ? `${images.length} observation${images.length > 1 ? 's' : ''}` : 'No imagery loaded'}
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-cyan-400 font-medium">
+            {images.length === 0 && "Archive Search Mode (0 observations loaded)"}
+            {images.length === 1 && "1 observation loaded (Baseline / Scene Interpretation)"}
+            {images.length === 2 && "2 observations loaded (Multi-Temporal Comparison Active)"}
+            {images.length > 2 && `${images.length} observations loaded (Multi-Temporal Persistence Active)`}
           </span>
         </div>
 
@@ -221,7 +262,13 @@ export function UnifiedQuestionResultPanel({
                 onSubmitQuery();
               }
             }}
-            placeholder="What would you like to determine from this imagery?"
+            placeholder={
+              images.length >= 2
+                ? "Investigate multi-temporal changes across these observations..."
+                : images.length === 1
+                  ? "What would you like to investigate in this Earth-observation scene?"
+                  : "Search satellite archive (e.g. Find newly built structures near a river)..."
+            }
             rows={2}
             className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-lg p-2.5 text-xs text-slate-100 placeholder:text-slate-500 outline-none resize-none transition-colors"
           />

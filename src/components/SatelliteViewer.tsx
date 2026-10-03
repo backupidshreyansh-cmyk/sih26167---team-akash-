@@ -11,7 +11,9 @@ import {
   Compass, 
   Layers, 
   ChevronRight,
-  FileImage
+  FileImage,
+  Search,
+  Clock
 } from 'lucide-react';
 import { UploadedImage } from '../types';
 import { SAMPLE_DATASETS, SampleDataset } from '../data/sampleDatasets';
@@ -33,6 +35,8 @@ interface SatelliteViewerProps {
   onClearAll: () => void;
   onUpdateRelationship?: (relationship: 'before-after' | 'optical-sar' | 'independent') => void;
   onLoadDataset: (dataset: SampleDataset) => void;
+  onOpenSemanticSearch?: () => void;
+  onOpenTemporalLab?: () => void;
   groundingBoxes?: GroundingBox[];
   activeTask?: string;
   decision?: string;
@@ -47,6 +51,8 @@ export function SatelliteViewer({
   onClearAll,
   onUpdateRelationship,
   onLoadDataset,
+  onOpenSemanticSearch,
+  onOpenTemporalLab,
   groundingBoxes = [],
   activeTask
 }: SatelliteViewerProps) {
@@ -270,6 +276,18 @@ export function SatelliteViewer({
         {/* Right Side: Viewer Tools */}
         {images.length > 0 && (
           <div className="flex items-center gap-1.5">
+            {images.length === 2 && onOpenTemporalLab && (
+              <button
+                type="button"
+                onClick={onOpenTemporalLab}
+                className="px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800/80 shadow-xs"
+                title="Launch Deep Multi-Temporal Change Lab"
+              >
+                <Clock size={13} />
+                <span>Change Lab</span>
+              </button>
+            )}
+
             {images.length > 1 && (
               <button
                 type="button"
@@ -409,6 +427,29 @@ export function SatelliteViewer({
                 Supported: GeoTIFF • TIFF • PNG • JPEG
               </div>
             </div>
+
+            {/* Semantic Satellite Retrieval Banner (SIH-26227) */}
+            {onOpenSemanticSearch && (
+              <button
+                type="button"
+                onClick={onOpenSemanticSearch}
+                className="w-full py-2.5 px-3.5 mb-5 rounded-xl bg-blue-950/40 hover:bg-blue-900/50 border border-blue-800/60 text-blue-300 hover:text-white flex items-center justify-between transition-all cursor-pointer group shadow-sm"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-blue-600/30 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+                    <Search size={15} />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>Search Earth-Observation Archives (Semantic Retrieval)</span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-900 text-blue-200">SIH-26227</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">Natural-language discovery across ISRO Bhoonidhi, MOSDAC &amp; Copernicus</div>
+                  </div>
+                </div>
+                <ChevronRight size={15} className="text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
 
             {/* Clearly Labelled Benchmark Examples */}
             <div className="space-y-2">

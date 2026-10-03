@@ -12,6 +12,9 @@ import { AIProvider } from '../providers/AIProvider.js';
 import { SessionState } from '../session/sessionManager.js';
 import { SelfQuestioningEngine } from './selfQuestioningEngine.js';
 import { globalRegistry } from '../tools/registry.js';
+import { EOIntelligenceService } from '../analysis/eoIntelligenceService.js';
+import { DeterministicEngine } from '../analysis/deterministicEngine.js';
+import { RemoteSensingEvidenceEngine } from '../evidence/RemoteSensingEvidenceEngine.js';
 
 export class Orchestrator {
     private provider: AIProvider;
@@ -39,6 +42,47 @@ export class Orchestrator {
         const hasSessionHistory = !!(this.session && this.session.messages.length > 0);
         const task = classifyTask(query, images, hasSessionHistory);
         trace.push({ step: 'TASK_CLASSIFIED', status: 'SUCCESS', details: `Task classified as ${task}` });
+
+        // PS 26227 CORE WORKFLOW ROUTING
+        if (task === 'SEMANTIC_RETRIEVAL') {
+            return await EOIntelligenceService.executeSemanticRetrieval(query, trace);
+        }
+
+        if (task === 'SIMILAR_SITE_DISCOVERY') {
+            return await EOIntelligenceService.executeSimilarSiteDiscovery(query, images, trace);
+        }
+
+        if (task === 'METADATA_PROVENANCE') {
+            return EOIntelligenceService.executeMetadataProvenance(images, trace);
+        }
+
+        if (task === 'ANALYST_REVIEW') {
+            return await EOIntelligenceService.executeAnalystReview(query, trace);
+        }
+
+        // Single image with temporal change question: honest baseline abstention
+        if ((task === 'CHANGE_VERIFICATION' || task === 'MULTITEMPORAL_CHANGE' || task === 'FALSE_ALARM_ASSESSMENT') && images.length === 1) {
+            const metrics = await DeterministicEngine.analyzeImage(images[0]);
+            let opticalEv;
+            if (images[0].modality !== 'SAR') {
+                opticalEv = await RemoteSensingEvidenceEngine.analyzeOpticalEvidence(images[0]);
+            }
+            return EOIntelligenceService.executeSingleObservationTemporalAbstention(query, images[0], metrics, opticalEv, trace);
+        }
+
+        // Single image scene interpretation: if no provider is present, direct Earth observation interpretation
+        if (task === 'SCENE_INTERPRETATION' && images.length === 1 && !this.provider) {
+            const metrics = await DeterministicEngine.analyzeImage(images[0]);
+            const opticalEv = images[0].modality !== 'SAR' ? await RemoteSensingEvidenceEngine.analyzeOpticalEvidence(images[0]) : undefined;
+            const sarEv = images[0].modality === 'SAR' ? await RemoteSensingEvidenceEngine.analyzeSAREvidence(images[0]) : undefined;
+            return EOIntelligenceService.executeSceneInterpretation(query, images[0], metrics, opticalEv, sarEv, trace);
+        }
+
+        // Multi-temporal false-alarm assessment or bi-temporal change with 2 observations
+        if ((task === 'FALSE_ALARM_ASSESSMENT' || task === 'MULTITEMPORAL_CHANGE' || task === 'CHANGE_VERIFICATION' || task === 'BI_TEMPORAL_ANALYSIS') && images.length === 2) {
+            const tempEv = await RemoteSensingEvidenceEngine.computeChange(images[0], images[1]);
+            return EOIntelligenceService.executeMultiTemporalAnalysis(query, images, tempEv, trace);
+        }
 
         // 3. METADATA & MODALITY
         const metadataCount = images.filter(i => i.geospatialMetadata !== null).length;
@@ -200,7 +244,13 @@ export class Orchestrator {
             };
 
         } catch (e: any) {
-            trace.push({ step: 'TOOL_EXECUTION_ERROR', status: 'ERROR', details: e.message });
+            trace.push({ step: 'TOOL_EXECUTION_ERROR', status: 'WARNING', details: e.message });
+            if (images.length === 1) {
+                const metrics = await DeterministicEngine.analyzeImage(images[0]);
+                const opticalEv = images[0].modality !== 'SAR' ? await RemoteSensingEvidenceEngine.analyzeOpticalEvidence(images[0]) : undefined;
+                const sarEv = images[0].modality === 'SAR' ? await RemoteSensingEvidenceEngine.analyzeSAREvidence(images[0]) : undefined;
+                return EOIntelligenceService.executeSceneInterpretation(query, images[0], metrics, opticalEv, sarEv, trace);
+            }
             return this.buildErrorResponse(trace, task, e.message);
         }
     }

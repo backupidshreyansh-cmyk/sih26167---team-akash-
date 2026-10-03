@@ -25,6 +25,13 @@ interface WorkstationHeaderProps {
   sessionId: string;
   onResetSession: () => void;
   onOpenSpecModal: () => void;
+  onOpenSemanticSearch?: () => void;
+  onOpenDiscovery?: () => void;
+  onOpenEvaluation?: () => void;
+  isBiTemporalAvailable?: boolean;
+  activeWorkspaceView?: 'workstation' | 'temporal-lab' | 'review';
+  onChangeWorkspaceView?: (view: 'workstation' | 'temporal-lab' | 'review') => void;
+  pendingReviewCount?: number;
 }
 
 export function WorkstationHeader({
@@ -33,7 +40,14 @@ export function WorkstationHeader({
   systemHealth,
   healthStatus,
   onResetSession,
-  onOpenSpecModal
+  onOpenSpecModal,
+  onOpenSemanticSearch,
+  onOpenDiscovery,
+  onOpenEvaluation,
+  isBiTemporalAvailable,
+  activeWorkspaceView = 'workstation',
+  onChangeWorkspaceView,
+  pendingReviewCount = 2
 }: WorkstationHeaderProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -52,16 +66,118 @@ export function WorkstationHeader({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-bold tracking-tight text-white font-sans">
-              SATQUERY AI
+              SATQUERY AI <span className="text-slate-500 font-normal text-xs">/ ORBITAL EYE</span>
             </span>
-            <span className="text-xs text-slate-400 hidden sm:inline">
-              Evidence-driven satellite intelligence
+            <span className="text-xs text-slate-400 hidden lg:inline">
+              Evidence-driven satellite intelligence (SIH 2026 PS 26227)
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 hidden sm:inline">
+              LOCAL • OFFLINE READY
             </span>
           </div>
         </div>
 
+        {/* Center: Workspace Navigation (Workstation vs Multi-Temporal Lab) */}
+        <div className="hidden md:flex items-center gap-2">
+          {onChangeWorkspaceView && (
+            <div className="flex items-center bg-slate-900 rounded-lg p-0.5 border border-slate-800 text-xs">
+              <button
+                type="button"
+                onClick={() => onChangeWorkspaceView('workstation')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeWorkspaceView === 'workstation'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Workstation &amp; VQA
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onChangeWorkspaceView('temporal-lab')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeWorkspaceView === 'temporal-lab'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <span>Multi-Temporal Lab</span>
+                {isBiTemporalAvailable && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onChangeWorkspaceView('review')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeWorkspaceView === 'review'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <span>Analyst Review</span>
+                {pendingReviewCount > 0 && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 bg-emerald-950 text-emerald-300 border border-emerald-800 rounded-full font-bold">
+                    {pendingReviewCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Dedicated Semantic Retrieval Action */}
+          {onOpenSemanticSearch && (
+            <button
+              type="button"
+              onClick={onOpenSemanticSearch}
+              className="px-2.5 py-1 rounded-lg bg-blue-950/80 hover:bg-blue-900/80 text-blue-300 hover:text-blue-100 border border-blue-800/80 text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+              title="Search ISRO & Copernicus Satellite Archives with Natural Language"
+            >
+              <span>🔍 Semantic</span>
+            </button>
+          )}
+
+          {/* Similar-Site Discovery Action */}
+          {onOpenDiscovery && (
+            <button
+              type="button"
+              onClick={onOpenDiscovery}
+              className="px-2.5 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 hover:text-cyan-100 border border-cyan-800/80 text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+              title="Embedding-based grouping & similar-site discovery"
+            >
+              <span>🌐 Discovery</span>
+            </button>
+          )}
+
+          {/* System Diagnostics & Benchmark Action */}
+          {onOpenEvaluation && (
+            <button
+              type="button"
+              onClick={onOpenEvaluation}
+              className="px-2.5 py-1 rounded-lg bg-purple-950/80 hover:bg-purple-900/80 text-purple-300 hover:text-purple-100 border border-purple-800/80 text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+              title="Capability Matrix & Reproducible Latency Benchmarks"
+            >
+              <span>📊 Eval</span>
+            </button>
+          )}
+        </div>
+
         {/* Right: Status Indicator & Technical Settings Dialog */}
         <div className="flex items-center gap-2">
+          
+          {/* Mobile Semantic Retrieval button */}
+          {onOpenSemanticSearch && (
+            <button
+              type="button"
+              onClick={onOpenSemanticSearch}
+              className="md:hidden p-1.5 text-blue-400 bg-blue-950/60 border border-blue-800/60 rounded-md transition-colors cursor-pointer"
+              title="Semantic Retrieval"
+            >
+              🔍
+            </button>
+          )}
           
           {/* Status Dot */}
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs text-slate-400 font-mono">
